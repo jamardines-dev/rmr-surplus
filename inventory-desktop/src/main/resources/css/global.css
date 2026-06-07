@@ -1,0 +1,222 @@
+.root {
+    -fx-font-family: "Arial", "Helvetica", sans-serif;
+    -fx-background-color: #eef3f8;
+    -fx-text-fill: #1f2937;
+}
+
+.screen {
+    -fx-background-color: #eef3f8;
+}
+
+.panel {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d7e0ea;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(15, 23, 42, 0.08), 14, 0, 0, 4);
+}
+
+.section {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d7e0ea;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 16;
+}
+
+.header {
+    -fx-padding: 0 0 6 0;
+}
+
+.title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #102033;
+}
+
+.subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #526171;
+}
+
+.field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #394657;
+}
+
+.message {
+    -fx-text-fill: #9f1239;
+    -fx-font-weight: bold;
+    -fx-padding: 4 0 0 0;
+}
+
+.button {
+    -fx-background-color: #1d4ed8;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-padding: 9 16;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: #1e40af;
+}
+
+.button.secondary {
+    -fx-background-color: #64748b;
+}
+
+.button.secondary:hover {
+    -fx-background-color: #475569;
+}
+
+.button.danger {
+    -fx-background-color: #be123c;
+}
+
+.button.danger:hover {
+    -fx-background-color: #9f1239;
+}
+
+.text-field,
+.password-field,
+.combo-box,
+.date-picker {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-color: #cbd5e1;
+    -fx-padding: 7;
+}
+
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.date-picker:focused {
+    -fx-border-color: #2563eb;
+}
+
+.table-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d7e0ea;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #dce8f3;
+    -fx-background-radius: 8 8 0 0;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+    -fx-size: 38;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #1e293b;
+    -fx-font-weight: bold;
+}
+
+.table-row-cell {
+    -fx-cell-size: 36;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #bfdbfe;
+    -fx-text-fill: #0f172a;
+}
+
+.toolbar {
+    -fx-alignment: center-left;
+    -fx-spacing: 10;
+}
+
+.dashboard-button {
+    -fx-min-width: 210;
+    -fx-min-height: 52;
+    -fx-font-size: 14px;
+}
+
+.sidebar {
+    -fx-background-color: #102033;
+}
+
+.sidebar-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.sidebar-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #bfd0e0;
+    -fx-padding: 0 0 16 0;
+}
+
+.sidebar-button,
+.sidebar-button-danger {
+    -fx-background-radius: 6;
+    -fx-alignment: center-left;
+    -fx-padding: 11 14;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.sidebar-button {
+    -fx-background-color: #1d3554;
+    -fx-text-fill: #eaf2fb;
+}
+
+.sidebar-button:hover {
+    -fx-background-color: #2563eb;
+}
+
+.sidebar-button-danger {
+    -fx-background-color: #7f1d1d;
+    -fx-text-fill: #ffffff;
+}
+
+.sidebar-button-danger:hover {
+    -fx-background-color: #b91c1c;
+}
+
+.content-area {
+    -fx-background-color: #eef3f8;
+}
+
+.summary-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d7e0ea;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 16;
+}
+
+.summary-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #526171;
+}
+
+.summary-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #102033;
+}
+
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #102033;
+}
+
+.cart-total {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #102033;
+    -fx-padding: 0 12 0 0;
+}

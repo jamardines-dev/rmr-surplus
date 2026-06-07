@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.inventory.vehicle.sales.presentation.SalesHistoryController"
+            prefHeight="720"
+            prefWidth="1120"
+            styleClass="screen">
+    <left>
+        <fx:include source="../common/sidebar.fxml"/>
+    </left>
+    <center>
+        <VBox spacing="16" styleClass="content-area">
+            <padding>
+                <Insets bottom="28" left="28" right="28" top="28"/>
+            </padding>
+            <VBox spacing="4" styleClass="header">
+                <Label text="Sales History" styleClass="title"/>
+                <Label text="Review sales and filter by date." styleClass="subtitle"/>
+            </VBox>
+            <HBox styleClass="toolbar">
+                <DatePicker fx:id="soldDatePicker" prefWidth="180"/>
+                <Button onAction="#loadSalesByDate" text="Filter Date"/>
+                <Button onAction="#loadAllSales" styleClass="secondary" text="All Sales"/>
+            </HBox>
+            <TableView fx:id="salesTable" prefHeight="460">
+                <columns>
+                    <TableColumn fx:id="idColumn" prefWidth="70" text="ID"/>
+                    <TableColumn fx:id="sellerColumn" prefWidth="180" text="Seller"/>
+                    <TableColumn fx:id="soldDateColumn" prefWidth="140" text="Sold Date"/>
+                    <TableColumn fx:id="totalColumn" prefWidth="130" text="Total"/>
+                    <TableColumn fx:id="encodedByColumn" prefWidth="150" text="Encoded By"/>
+                    <TableColumn fx:id="createdAtColumn" prefWidth="240" text="Created At"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>

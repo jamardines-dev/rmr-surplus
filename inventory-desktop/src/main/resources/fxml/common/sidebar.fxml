@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.inventory.vehicle.navigation.presentation.SidebarComponentController"
+      prefWidth="230"
+      spacing="10"
+      styleClass="sidebar">
+    <padding>
+        <Insets bottom="24" left="18" right="18" top="24"/>
+    </padding>
+    <Label text="Vehicle Parts" styleClass="sidebar-title"/>
+    <Label fx:id="welcomeLabel" wrapText="true" styleClass="sidebar-subtitle"/>
+
+    <Button maxWidth="Infinity" onAction="#showDashboard" styleClass="sidebar-button" text="Dashboard"/>
+    <Button maxWidth="Infinity" onAction="#showProducts" styleClass="sidebar-button" text="Products"/>
+    <Button maxWidth="Infinity" onAction="#showInventory" styleClass="sidebar-button" text="Inventory"/>
+    <Button maxWidth="Infinity" onAction="#showSalesHistory" styleClass="sidebar-button" text="Sales History"/>
+    <Button maxWidth="Infinity" onAction="#showReports" styleClass="sidebar-button" text="Reports"/>
+    <Button maxWidth="Infinity" onAction="#logout" styleClass="sidebar-button-danger" text="Logout"/>
+</VBox>
