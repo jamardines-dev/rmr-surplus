@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
+set -e
+
 set -a
 . ./.env
 set +a
 
-./mvnw javafx:run
+echo "Starting RMR SURPLUS desktop app..."
+./mvnw -pl inventory-desktop javafx:run

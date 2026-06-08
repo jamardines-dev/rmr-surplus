@@ -24,7 +24,7 @@
             <Insets bottom="34" left="34" right="34" top="34"/>
         </padding>
 
-        <Label text="Vehicle Parts Inventory" styleClass="title"/>
+        <Label text="RMR SURPLUS" styleClass="title"/>
         <Label text="Sign in to manage inventory and sales." styleClass="subtitle"/>
         <TextField fx:id="usernameField" promptText="Username"/>
         <PasswordField fx:id="passwordField" onAction="#handleLogin" promptText="Password"/>

@@ -1,6 +1,8 @@
 package com.inventory.vehicle.auth.presentation;
 
 import com.inventory.vehicle.auth.application.LoginService;
+import com.inventory.vehicle.auth.application.SessionService;
+import com.inventory.vehicle.auth.domain.Role;
 import com.inventory.vehicle.navigation.SceneManager;
 import com.inventory.vehicle.navigation.View;
 import javafx.fxml.FXML;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Controller;
 public class LoginController {
 
     private final LoginService loginService;
+    private final SessionService sessionService;
     private final SceneManager sceneManager;
 
     @FXML
@@ -24,8 +27,9 @@ public class LoginController {
     @FXML
     private Label messageLabel;
 
-    public LoginController(LoginService loginService, SceneManager sceneManager) {
+    public LoginController(LoginService loginService, SessionService sessionService, SceneManager sceneManager) {
         this.loginService = loginService;
+        this.sessionService = sessionService;
         this.sceneManager = sceneManager;
     }
 
@@ -40,7 +44,9 @@ public class LoginController {
         }
 
         if (loginService.login(username, password)) {
-            sceneManager.show(View.DASHBOARD);
+            sceneManager.show(sessionService.getCurrentRole() == Role.ADMIN
+                    ? View.DASHBOARD
+                    : View.EMPLOYEE_DASHBOARD);
         } else {
             messageLabel.setText("Invalid username or password.");
         }

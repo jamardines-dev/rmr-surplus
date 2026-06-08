@@ -1,0 +1,38 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build with Maven
+      run: .\mvnw.cmd clean package -DskipTests
+
+    - name: Stage JAR
+      run: |
+        mkdir staging
+        copy inventory-desktop\target\inventory-desktop-0.0.1-SNAPSHOT.jar staging\
+
+    - name: Create Windows App Image
+      run: |
+        jpackage --type app-image --name "InventoryDesktop" --input staging --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar --dest windows-app
+
+    - name: Upload Windows App Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: InventoryDesktop-Windows
+        path: windows-app/InventoryDesktop

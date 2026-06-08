@@ -4,9 +4,6 @@ import com.inventory.vehicle.audit.application.AuditService;
 import com.inventory.vehicle.auth.application.SessionService;
 import com.inventory.vehicle.auth.domain.Role;
 import com.inventory.vehicle.common.exception.BusinessException;
-import com.inventory.vehicle.inventory.domain.StockMovement;
-import com.inventory.vehicle.inventory.domain.StockMovementType;
-import com.inventory.vehicle.inventory.infrastructure.StockMovementRepository;
 import com.inventory.vehicle.product.domain.Brand;
 import com.inventory.vehicle.product.domain.Product;
 import com.inventory.vehicle.product.domain.VehicleType;
@@ -23,7 +20,6 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
     private final VehicleTypeRepository vehicleTypeRepository;
-    private final StockMovementRepository stockMovementRepository;
     private final AuditService auditService;
     private final SessionService sessionService;
 
@@ -31,14 +27,12 @@ public class ProductService {
             ProductRepository productRepository,
             BrandRepository brandRepository,
             VehicleTypeRepository vehicleTypeRepository,
-            StockMovementRepository stockMovementRepository,
             AuditService auditService,
             SessionService sessionService
     ) {
         this.productRepository = productRepository;
         this.brandRepository = brandRepository;
         this.vehicleTypeRepository = vehicleTypeRepository;
-        this.stockMovementRepository = stockMovementRepository;
         this.auditService = auditService;
         this.sessionService = sessionService;
     }
@@ -55,6 +49,7 @@ public class ProductService {
         product.setProductName(command.productName().trim());
         product.setBrand(brand);
         product.setVehicleType(vehicleType);
+        product.setModelCode(command.modelCode().trim());
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
 
@@ -74,6 +69,7 @@ public class ProductService {
         product.setProductName(command.productName().trim());
         product.setBrand(findOrCreateBrand(command.brandName()));
         product.setVehicleType(findOrCreateVehicleType(command.vehicleTypeName()));
+        product.setModelCode(command.modelCode().trim());
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
 
@@ -93,25 +89,6 @@ public class ProductService {
         auditService.record("DELETE_PRODUCT", "Deleted product " + product.getProductName(), sessionService.getCurrentUsername());
     }
 
-    @Transactional
-    public ProductResult restockProduct(Long productId, int quantity) {
-        requireAdmin();
-        if (quantity <= 0) {
-            throw new BusinessException("Quantity must be greater than zero.");
-        }
-
-        Product product = productRepository.findByIdAndActiveTrue(productId)
-                .orElseThrow(() -> new BusinessException("Product was not found."));
-        int previousStock = product.getCurrentStock();
-        int newStock = previousStock + quantity;
-
-        product.setCurrentStock(newStock);
-        Product savedProduct = productRepository.save(product);
-        stockMovementRepository.save(createRestockMovement(savedProduct, quantity, previousStock, newStock));
-        auditService.record("RESTOCK_PRODUCT", "Restocked " + quantity + " item(s) for " + savedProduct.getProductName(), sessionService.getCurrentUsername());
-        return ProductResultMapper.toResult(savedProduct);
-    }
-
     private void validate(CreateProductCommand command) {
         if (command.productName() == null || command.productName().isBlank()) {
             throw new BusinessException("Product name is required.");
@@ -122,6 +99,12 @@ public class ProductService {
         if (command.vehicleTypeName() == null || command.vehicleTypeName().isBlank()) {
             throw new BusinessException("Vehicle type is required.");
         }
+        if (command.modelCode() == null || command.modelCode().isBlank()) {
+            throw new BusinessException("Model code is required.");
+        }
+        if (productRepository.existsByModelCodeIgnoreCase(command.modelCode().trim())) {
+            throw new BusinessException("Model code already exists.");
+        }
         if (command.currentStock() < 0) {
             throw new BusinessException("Product stock must never become negative.");
         }
@@ -131,13 +114,27 @@ public class ProductService {
     }
 
     private void validate(UpdateProductCommand command) {
-        validate(new CreateProductCommand(
-                command.productName(),
-                command.brandName(),
-                command.vehicleTypeName(),
-                command.currentStock(),
-                command.unitPrice()
-        ));
+        if (command.productName() == null || command.productName().isBlank()) {
+            throw new BusinessException("Product name is required.");
+        }
+        if (command.brandName() == null || command.brandName().isBlank()) {
+            throw new BusinessException("Brand is required.");
+        }
+        if (command.vehicleTypeName() == null || command.vehicleTypeName().isBlank()) {
+            throw new BusinessException("Vehicle type is required.");
+        }
+        if (command.modelCode() == null || command.modelCode().isBlank()) {
+            throw new BusinessException("Model code is required.");
+        }
+        if (productRepository.existsByModelCodeIgnoreCaseAndIdNot(command.modelCode().trim(), command.productId())) {
+            throw new BusinessException("Model code already exists.");
+        }
+        if (command.currentStock() < 0) {
+            throw new BusinessException("Product stock must never become negative.");
+        }
+        if (command.unitPrice() == null || command.unitPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("Price must not be negative.");
+        }
     }
 
     private Brand findOrCreateBrand(String name) {
@@ -164,15 +161,4 @@ public class ProductService {
         }
     }
 
-    private StockMovement createRestockMovement(Product product, int quantity, int previousStock, int newStock) {
-        StockMovement movement = new StockMovement();
-        movement.setProduct(product);
-        movement.setMovementType(StockMovementType.RESTOCK);
-        movement.setQuantity(quantity);
-        movement.setPreviousStock(previousStock);
-        movement.setNewStock(newStock);
-        movement.setReason("Product restocked");
-        movement.setCreatedBy(sessionService.getCurrentUsername());
-        return movement;
-    }
 }

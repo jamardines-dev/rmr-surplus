@@ -1,6 +1,7 @@
 package com.inventory.vehicle.dashboard.presentation;
 
 import com.inventory.vehicle.auth.application.SessionService;
+import com.inventory.vehicle.common.util.MoneyFormat;
 import com.inventory.vehicle.navigation.SceneManager;
 import com.inventory.vehicle.navigation.View;
 import com.inventory.vehicle.product.application.ProductQueryService;
@@ -8,12 +9,12 @@ import com.inventory.vehicle.product.application.ProductResult;
 import com.inventory.vehicle.product.presentation.ProductTableRow;
 import com.inventory.vehicle.sales.application.DailySalesService;
 import com.inventory.vehicle.sales.application.SalesQueryService;
-import com.inventory.vehicle.sales.presentation.SaleTableRow;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -32,34 +33,46 @@ public class DashboardController {
     private Label productCountLabel;
 
     @FXML
-    private Label totalStockLabel;
+    private Label itemsSoldTodayLabel;
 
     @FXML
     private Label todaySalesLabel;
 
     @FXML
-    private TableView<ProductTableRow> inventoryTable;
+    private Label transactionsTodayLabel;
 
     @FXML
-    private TableColumn<ProductTableRow, String> productNameColumn;
+    private Label outOfStockLabel;
 
     @FXML
-    private TableColumn<ProductTableRow, String> brandColumn;
+    private TableView<RecentSaleActivityRow> recentSalesTable;
 
     @FXML
-    private TableColumn<ProductTableRow, Integer> stockColumn;
+    private TableColumn<RecentSaleActivityRow, String> sellerColumn;
 
     @FXML
-    private TableView<SaleTableRow> recentSalesTable;
+    private TableColumn<RecentSaleActivityRow, String> activityColumn;
 
     @FXML
-    private TableColumn<SaleTableRow, Long> saleIdColumn;
+    private TableColumn<RecentSaleActivityRow, BigDecimal> saleTotalColumn;
 
     @FXML
-    private TableColumn<SaleTableRow, String> sellerColumn;
+    private TableColumn<RecentSaleActivityRow, String> soldAtColumn;
 
     @FXML
-    private TableColumn<SaleTableRow, BigDecimal> saleTotalColumn;
+    private TableView<EmployeeSummaryTableRow> employeeSummaryTable;
+
+    @FXML
+    private TableColumn<EmployeeSummaryTableRow, String> employeeColumn;
+
+    @FXML
+    private TableColumn<EmployeeSummaryTableRow, Long> employeeTransactionsColumn;
+
+    @FXML
+    private TableColumn<EmployeeSummaryTableRow, Integer> employeeItemsColumn;
+
+    @FXML
+    private TableColumn<EmployeeSummaryTableRow, BigDecimal> employeeSalesColumn;
 
     public DashboardController(
             SceneManager sceneManager,
@@ -77,35 +90,52 @@ public class DashboardController {
 
     @FXML
     private void initialize() {
-        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
-        brandColumn.setCellValueFactory(new PropertyValueFactory<>("brandName"));
-        stockColumn.setCellValueFactory(new PropertyValueFactory<>("currentStock"));
-        saleIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         sellerColumn.setCellValueFactory(new PropertyValueFactory<>("sellerName"));
+        activityColumn.setCellValueFactory(new PropertyValueFactory<>("activity"));
         saleTotalColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        saleTotalColumn.setCellFactory(column -> moneyCell());
+        soldAtColumn.setCellValueFactory(new PropertyValueFactory<>("soldAtText"));
+        employeeColumn.setCellValueFactory(new PropertyValueFactory<>("employeeName"));
+        employeeTransactionsColumn.setCellValueFactory(new PropertyValueFactory<>("transactionsToday"));
+        employeeItemsColumn.setCellValueFactory(new PropertyValueFactory<>("itemsSoldToday"));
+        employeeSalesColumn.setCellValueFactory(new PropertyValueFactory<>("totalSalesToday"));
+        employeeSalesColumn.setCellFactory(column -> moneyCell());
         refreshDashboard();
     }
 
     @FXML
     private void refreshDashboard() {
         List<ProductResult> products = productQueryService.findActiveProducts();
-        int totalStock = products.stream()
-                .mapToInt(ProductResult::currentStock)
-                .sum();
-        BigDecimal todaySales = dailySalesService.calculateTotalForDate(LocalDate.now());
+        LocalDate today = LocalDate.now();
+        BigDecimal todaySales = dailySalesService.calculateTotalForDate(today);
+        List<RecentSaleActivityRow> todaySaleLines = salesQueryService.findSaleLinesByDate(today)
+                .stream()
+                .map(RecentSaleActivityRow::new)
+                .toList();
 
         productCountLabel.setText(String.valueOf(products.size()));
-        totalStockLabel.setText(String.valueOf(totalStock));
-        todaySalesLabel.setText(todaySales.toPlainString());
+        itemsSoldTodayLabel.setText(String.valueOf(todaySaleLines.stream()
+                .mapToInt(RecentSaleActivityRow::getQuantitySold)
+                .sum()));
+        todaySalesLabel.setText(MoneyFormat.peso(todaySales));
+        transactionsTodayLabel.setText(String.valueOf(salesQueryService.findSalesByDate(today).size()));
+        outOfStockLabel.setText(String.valueOf(productQueryService.findOutOfStockProducts().size()));
 
-        inventoryTable.getItems().setAll(products.stream()
-                .map(ProductTableRow::new)
-                .toList());
-        recentSalesTable.getItems().setAll(salesQueryService.findAllSales()
+        recentSalesTable.getItems().setAll(todaySaleLines.stream().limit(10).toList());
+        employeeSummaryTable.getItems().setAll(salesQueryService.summarizeSalesPerEmployee(today)
                 .stream()
-                .limit(8)
-                .map(SaleTableRow::new)
+                .map(EmployeeSummaryTableRow::new)
                 .toList());
+    }
+
+    private <S> TableCell<S, BigDecimal> moneyCell() {
+        return new TableCell<>() {
+            @Override
+            protected void updateItem(BigDecimal amount, boolean empty) {
+                super.updateItem(amount, empty);
+                setText(empty ? null : MoneyFormat.peso(amount));
+            }
+        };
     }
 
     @FXML

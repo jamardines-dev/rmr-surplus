@@ -7,6 +7,7 @@ public record UpdateProductCommand(
         String productName,
         String brandName,
         String vehicleTypeName,
+        String modelCode,
         int currentStock,
         BigDecimal unitPrice
 ) {

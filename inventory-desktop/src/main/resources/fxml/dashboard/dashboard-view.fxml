@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -27,44 +26,54 @@
             </padding>
 
             <VBox spacing="4" styleClass="header">
-                <Label text="Dashboard" styleClass="title"/>
-                <Label text="Overview of inventory, stock, and sales activity." styleClass="subtitle"/>
+                <Label text="Admin Dashboard" styleClass="title"/>
+                <Label text="Daily sales, employee activity, and inventory alerts." styleClass="subtitle"/>
             </VBox>
 
             <GridPane hgap="14" vgap="14">
-                <VBox minWidth="190" spacing="6" styleClass="summary-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                    <Label text="Products" styleClass="summary-label"/>
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <Label text="Sales Today" styleClass="summary-label"/>
+                    <Label fx:id="todaySalesLabel" text="₱0.00" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Label text="Items Sold" styleClass="summary-label"/>
+                    <Label fx:id="itemsSoldTodayLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                    <Label text="Transactions" styleClass="summary-label"/>
+                    <Label fx:id="transactionsTodayLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                    <Label text="Active Products" styleClass="summary-label"/>
                     <Label fx:id="productCountLabel" text="0" styleClass="summary-value"/>
                 </VBox>
-                <VBox minWidth="190" spacing="6" styleClass="summary-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                    <Label text="Total Stock" styleClass="summary-label"/>
-                    <Label fx:id="totalStockLabel" text="0" styleClass="summary-value"/>
-                </VBox>
-                <VBox minWidth="190" spacing="6" styleClass="summary-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                    <Label text="Today's Sales" styleClass="summary-label"/>
-                    <Label fx:id="todaySalesLabel" text="0.00" styleClass="summary-value"/>
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="4" GridPane.rowIndex="0">
+                    <Label text="Out of Stock" styleClass="summary-label"/>
+                    <Label fx:id="outOfStockLabel" text="0" styleClass="summary-value"/>
                 </VBox>
             </GridPane>
 
-            <HBox spacing="16">
-                <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label text="Inventory Details" styleClass="section-title"/>
-                    <TableView fx:id="inventoryTable" prefHeight="360" prefWidth="500">
+            <HBox spacing="16" VBox.vgrow="ALWAYS">
+                <VBox spacing="10" styleClass="section" HBox.hgrow="ALWAYS">
+                    <Label text="Recent Employee Sales" styleClass="section-title"/>
+                    <TableView fx:id="recentSalesTable" maxHeight="Infinity" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="productNameColumn" prefWidth="210" text="Product"/>
-                            <TableColumn fx:id="brandColumn" prefWidth="150" text="Part Brand"/>
-                            <TableColumn fx:id="stockColumn" prefWidth="90" text="Stock"/>
+                            <TableColumn fx:id="sellerColumn" prefWidth="140" text="Employee"/>
+                            <TableColumn fx:id="activityColumn" prefWidth="360" text="Activity"/>
+                            <TableColumn fx:id="saleTotalColumn" prefWidth="120" text="Total"/>
+                            <TableColumn fx:id="soldAtColumn" prefWidth="170" text="Date and Time"/>
                         </columns>
                     </TableView>
                 </VBox>
 
-                <VBox spacing="10" HBox.hgrow="ALWAYS">
-                    <Label text="Recent Sales" styleClass="section-title"/>
-                    <TableView fx:id="recentSalesTable" prefHeight="360" prefWidth="360">
+                <VBox spacing="10" styleClass="section" prefWidth="440" HBox.hgrow="ALWAYS">
+                    <Label text="Sales Summary Per Employee" styleClass="section-title"/>
+                    <TableView fx:id="employeeSummaryTable" maxHeight="Infinity" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="saleIdColumn" prefWidth="70" text="ID"/>
-                            <TableColumn fx:id="sellerColumn" prefWidth="150" text="Seller"/>
-                            <TableColumn fx:id="saleTotalColumn" prefWidth="120" text="Total"/>
+                            <TableColumn fx:id="employeeColumn" prefWidth="135" text="Employee"/>
+                            <TableColumn fx:id="employeeTransactionsColumn" prefWidth="105" text="Transactions"/>
+                            <TableColumn fx:id="employeeItemsColumn" prefWidth="85" text="Items"/>
+                            <TableColumn fx:id="employeeSalesColumn" prefWidth="115" text="Sales"/>
                         </columns>
                     </TableView>
                 </VBox>

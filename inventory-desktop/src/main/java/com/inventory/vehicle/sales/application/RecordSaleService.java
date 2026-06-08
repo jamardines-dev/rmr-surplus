@@ -2,6 +2,7 @@ package com.inventory.vehicle.sales.application;
 
 import com.inventory.vehicle.audit.application.AuditService;
 import com.inventory.vehicle.auth.application.SessionService;
+import com.inventory.vehicle.auth.domain.Role;
 import com.inventory.vehicle.common.exception.BusinessException;
 import com.inventory.vehicle.inventory.domain.StockMovement;
 import com.inventory.vehicle.inventory.domain.StockMovementType;
@@ -44,43 +45,8 @@ public class RecordSaleService {
     }
 
     @Transactional
-    public Long recordSale(RecordSaleCommand command) {
-        validate(command);
-
-        Product product = productRepository.findById(command.productId())
-                .orElseThrow(() -> new BusinessException("Product was not found."));
-        int previousStock = product.getCurrentStock();
-        int newStock = previousStock - command.quantitySold();
-
-        if (newStock < 0) {
-            throw new BusinessException("Product stock must never become negative.");
-        }
-
-        BigDecimal itemTotal = command.priceSold().multiply(BigDecimal.valueOf(command.quantitySold()));
-        Sale sale = new Sale();
-        sale.setSellerName(command.sellerName().trim());
-        sale.setSoldDate(command.soldDate());
-        sale.setTotalAmount(itemTotal);
-        sale.setEncodedBy(sessionService.getCurrentUsername());
-        Sale savedSale = saleRepository.save(sale);
-
-        SaleItem saleItem = new SaleItem();
-        saleItem.setSale(savedSale);
-        saleItem.setProduct(product);
-        saleItem.setQuantitySold(command.quantitySold());
-        saleItem.setPriceSold(command.priceSold());
-        saleItem.setTotalAmount(itemTotal);
-        saleItemRepository.save(saleItem);
-
-        product.setCurrentStock(newStock);
-        productRepository.save(product);
-        stockMovementRepository.save(createSaleMovement(product, command.quantitySold(), previousStock, newStock, savedSale.getId()));
-        auditService.record("RECORD_SALE", "Recorded sale " + savedSale.getId() + " for " + product.getProductName(), sessionService.getCurrentUsername());
-        return savedSale.getId();
-    }
-
-    @Transactional
     public Long recordCartSale(RecordCartSaleCommand command) {
+        requireEmployee();
         validate(command);
 
         BigDecimal saleTotal = command.items()
@@ -89,20 +55,21 @@ public class RecordSaleService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Sale sale = new Sale();
-        sale.setSellerName(command.sellerName().trim());
+        sale.setSellerName(sessionService.getCurrentDisplayName());
         sale.setSoldDate(command.soldDate());
         sale.setTotalAmount(saleTotal);
         sale.setEncodedBy(sessionService.getCurrentUsername());
         Sale savedSale = saleRepository.save(sale);
 
         for (CartSaleItemCommand item : command.items()) {
-            Product product = productRepository.findById(item.productId())
-                    .orElseThrow(() -> new BusinessException("Product was not found."));
+            Product product = productRepository.findByIdAndActiveTrue(item.productId())
+                    .orElseThrow(() -> new BusinessException("Select an active product."));
             int previousStock = product.getCurrentStock();
             int newStock = previousStock - item.quantitySold();
 
             if (newStock < 0) {
-                throw new BusinessException("Product stock must never become negative.");
+                throw new BusinessException("Insufficient stock for " + product.getProductName()
+                        + ". Available stock: " + previousStock + ".");
             }
 
             BigDecimal itemTotal = item.priceSold().multiply(BigDecimal.valueOf(item.quantitySold()));
@@ -124,7 +91,7 @@ public class RecordSaleService {
     }
 
     @Transactional
-    public void undoSale(Long saleId) {
+    void undoSale(Long saleId) {
         Sale sale = saleRepository.findById(saleId)
                 .orElseThrow(() -> new BusinessException("Sale was not found."));
         List<SaleItem> saleItems = saleItemRepository.findBySaleId(saleId);
@@ -150,36 +117,52 @@ public class RecordSaleService {
 
     @Transactional
     public Long undoLatestSaleForSeller(String sellerName) {
-        if (sellerName == null || sellerName.isBlank()) {
-            throw new BusinessException("Seller name is required to undo a sale.");
-        }
+        requireEmployee();
+        String currentSeller = sessionService.getCurrentDisplayName();
 
-        Sale sale = saleRepository.findFirstBySellerNameIgnoreCaseOrderByCreatedAtDesc(sellerName.trim())
-                .orElseThrow(() -> new BusinessException("No sale found for this seller."));
+        Sale sale = saleRepository.findFirstBySellerNameIgnoreCaseOrderByCreatedAtDesc(currentSeller)
+                .orElseThrow(() -> new BusinessException("No sale found for your account."));
         Long saleId = sale.getId();
         undoSale(saleId);
         return saleId;
     }
 
-    private void validate(RecordSaleCommand command) {
-        if (command.sellerName() == null || command.sellerName().isBlank()) {
-            throw new BusinessException("Seller name is required.");
+    @Transactional
+    public Long undoSaleItemForSeller(Long saleItemId, String sellerName) {
+        requireEmployee();
+        if (saleItemId == null) {
+            throw new BusinessException("Select a sold product to undo.");
         }
-        if (command.soldDate() == null) {
-            throw new BusinessException("Sold date is required.");
+
+        SaleItem saleItem = saleItemRepository.findById(saleItemId)
+                .orElseThrow(() -> new BusinessException("Sold product was not found."));
+        Sale sale = saleItem.getSale();
+        if (!sale.getSellerName().equalsIgnoreCase(sessionService.getCurrentDisplayName())) {
+            throw new BusinessException("You can only undo your own sold products.");
         }
-        if (command.quantitySold() <= 0) {
-            throw new BusinessException("Quantity must be greater than zero.");
+
+        Product product = saleItem.getProduct();
+        int previousStock = product.getCurrentStock();
+        int newStock = previousStock + saleItem.getQuantitySold();
+        product.setCurrentStock(newStock);
+        productRepository.save(product);
+        stockMovementRepository.save(createUndoMovement(product, saleItem.getQuantitySold(), previousStock, newStock, sale.getId()));
+
+        List<SaleItem> saleItems = saleItemRepository.findBySaleId(sale.getId());
+        if (saleItems.size() <= 1) {
+            saleItemRepository.delete(saleItem);
+            saleRepository.delete(sale);
+        } else {
+            sale.setTotalAmount(sale.getTotalAmount().subtract(saleItem.getTotalAmount()));
+            saleRepository.save(sale);
+            saleItemRepository.delete(saleItem);
         }
-        if (command.priceSold() == null || command.priceSold().compareTo(BigDecimal.ZERO) < 0) {
-            throw new BusinessException("Price must not be negative.");
-        }
+
+        auditService.record("UNDO_SALE_ITEM", "Undid sold product " + saleItemId + " from sale " + sale.getId(), sessionService.getCurrentUsername());
+        return sale.getId();
     }
 
     private void validate(RecordCartSaleCommand command) {
-        if (command.sellerName() == null || command.sellerName().isBlank()) {
-            throw new BusinessException("Seller name is required.");
-        }
         if (command.soldDate() == null) {
             throw new BusinessException("Sold date is required.");
         }
@@ -190,9 +173,18 @@ public class RecordSaleService {
             if (item.quantitySold() <= 0) {
                 throw new BusinessException("Quantity must be greater than zero.");
             }
-            if (item.priceSold() == null || item.priceSold().compareTo(BigDecimal.ZERO) < 0) {
-                throw new BusinessException("Price must not be negative.");
+            if (item.priceSold() == null || item.priceSold().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BusinessException("Price must be greater than zero.");
             }
+        }
+    }
+
+    private void requireEmployee() {
+        if (!sessionService.isLoggedIn()) {
+            throw new BusinessException("You must be logged in.");
+        }
+        if (sessionService.getCurrentRole() != Role.EMPLOYEE) {
+            throw new BusinessException("Only employees can record or undo sales.");
         }
     }
 

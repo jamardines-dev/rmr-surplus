@@ -7,7 +7,9 @@ public record ProductResult(
         String productName,
         String brandName,
         String vehicleTypeName,
+        String modelCode,
         int currentStock,
-        BigDecimal unitPrice
+        BigDecimal unitPrice,
+        boolean active
 ) {
 }

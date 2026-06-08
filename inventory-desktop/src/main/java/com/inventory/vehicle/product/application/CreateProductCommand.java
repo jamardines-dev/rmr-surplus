@@ -6,6 +6,7 @@ public record CreateProductCommand(
         String productName,
         String brandName,
         String vehicleTypeName,
+        String modelCode,
         int currentStock,
         BigDecimal unitPrice
 ) {

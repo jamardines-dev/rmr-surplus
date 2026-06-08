@@ -23,6 +23,15 @@ public class ProductQueryService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProductResult> findOutOfStockProducts() {
+        return productRepository.findByActiveTrueOrderByProductNameAsc()
+                .stream()
+                .filter(product -> product.getCurrentStock() == 0)
+                .map(ProductResultMapper::toResult)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ProductResult findProduct(Long productId) {
         return productRepository.findByIdAndActiveTrue(productId)
                 .map(ProductResultMapper::toResult)

@@ -12,5 +12,7 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     Optional<Sale> findFirstBySellerNameIgnoreCaseOrderByCreatedAtDesc(String sellerName);
 
+    List<Sale> findBySellerNameIgnoreCase(String sellerName);
+
     List<Sale> findAllByOrderByCreatedAtDesc();
 }

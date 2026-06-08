@@ -1,5 +1,6 @@
 package com.inventory.vehicle.navigation;
 
+import com.inventory.vehicle.auth.domain.Role;
 import com.inventory.vehicle.auth.application.SessionService;
 import javafx.fxml.FXML;
 
@@ -15,7 +16,9 @@ public abstract class SidebarController {
 
     @FXML
     protected void showDashboard() {
-        sceneManager.show(View.DASHBOARD);
+        sceneManager.show(sessionService.getCurrentRole() == Role.ADMIN
+                ? View.DASHBOARD
+                : View.EMPLOYEE_DASHBOARD);
     }
 
     @FXML
@@ -34,8 +37,18 @@ public abstract class SidebarController {
     }
 
     @FXML
+    protected void showEmployeeSales() {
+        sceneManager.show(View.EMPLOYEE_SALES);
+    }
+
+    @FXML
     protected void showReports() {
         sceneManager.show(View.REPORTS);
+    }
+
+    @FXML
+    protected void showUsers() {
+        sceneManager.show(View.USERS);
     }
 
     @FXML

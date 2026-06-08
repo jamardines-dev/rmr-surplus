@@ -7,6 +7,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
@@ -20,27 +21,53 @@
         <fx:include source="../common/sidebar.fxml"/>
     </left>
     <center>
-        <VBox spacing="16" styleClass="content-area">
+        <VBox spacing="18" styleClass="content-area">
             <padding>
                 <Insets bottom="28" left="28" right="28" top="28"/>
             </padding>
+
             <VBox spacing="4" styleClass="header">
                 <Label text="Reports" styleClass="title"/>
-                <Label text="Inventory overview and daily sales total." styleClass="subtitle"/>
+                <Label text="Daily sales and current inventory value." styleClass="subtitle"/>
             </VBox>
-            <HBox styleClass="toolbar">
+
+            <HBox spacing="10" styleClass="toolbar">
                 <DatePicker fx:id="salesDatePicker" prefWidth="180"/>
-                <Button onAction="#refreshReports" text="Refresh"/>
-                <Label fx:id="totalSalesLabel" styleClass="subtitle"/>
+                <Button onAction="#refreshReports" text="Refresh Reports"/>
             </HBox>
-            <TableView fx:id="productTable" prefHeight="460">
-                <columns>
-                    <TableColumn fx:id="productNameColumn" prefWidth="280" text="Product"/>
-                    <TableColumn fx:id="brandColumn" prefWidth="190" text="Part Brand"/>
-                    <TableColumn fx:id="stockColumn" prefWidth="130" text="Stock"/>
-                    <TableColumn fx:id="priceColumn" prefWidth="150" text="Unit Price"/>
-                </columns>
-            </TableView>
+
+            <GridPane hgap="12" vgap="12">
+                <VBox minWidth="180" spacing="6" styleClass="summary-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <Label text="Sales For Date" styleClass="summary-label"/>
+                    <Label fx:id="totalSalesLabel" text="₱0.00" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="180" spacing="6" styleClass="summary-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Label text="Active Products" styleClass="summary-label"/>
+                    <Label fx:id="activeProductsLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="180" spacing="6" styleClass="summary-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                    <Label text="Total Stock" styleClass="summary-label"/>
+                    <Label fx:id="totalStockLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="220" spacing="6" styleClass="summary-card" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                    <Label text="Inventory Value" styleClass="summary-label"/>
+                    <Label fx:id="inventoryValueLabel" text="₱0.00" styleClass="summary-value"/>
+                </VBox>
+            </GridPane>
+
+            <VBox spacing="12" styleClass="section" VBox.vgrow="ALWAYS">
+                <HBox spacing="10" styleClass="toolbar">
+                    <Label text="Current Inventory Report" styleClass="section-title"/>
+                </HBox>
+                <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="productNameColumn" prefWidth="300" text="Product"/>
+                        <TableColumn fx:id="brandColumn" prefWidth="190" text="Brand"/>
+                        <TableColumn fx:id="stockColumn" prefWidth="130" text="Stock"/>
+                        <TableColumn fx:id="priceColumn" prefWidth="160" text="Unit Price"/>
+                    </columns>
+                </TableView>
+            </VBox>
         </VBox>
     </center>
 </BorderPane>

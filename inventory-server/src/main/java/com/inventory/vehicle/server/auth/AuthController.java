@@ -1,5 +1,6 @@
 package com.inventory.vehicle.server.auth;
 
+import com.inventory.vehicle.server.audit.AuditService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,10 +16,19 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SessionTokenService sessionTokenService;
+    private final AuditService auditService;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            SessionTokenService sessionTokenService,
+            AuditService auditService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.sessionTokenService = sessionTokenService;
+        this.auditService = auditService;
     }
 
     @PostMapping("/login")
@@ -31,6 +41,8 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password.");
         }
 
-        return new LoginResponse(user.getId(), user.getUsername(), user.getRole());
+        String token = sessionTokenService.createToken(user);
+        auditService.record("LOGIN", user.getUsername() + " logged in", user.getUsername());
+        return new LoginResponse(user.getId(), user.getUsername(), user.getRole(), token);
     }
 }

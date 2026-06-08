@@ -14,13 +14,15 @@
     <padding>
         <Insets bottom="24" left="18" right="18" top="24"/>
     </padding>
-    <Label text="Vehicle Parts" styleClass="sidebar-title"/>
+    <Label text="RMR SURPLUS" styleClass="sidebar-title"/>
     <Label fx:id="welcomeLabel" wrapText="true" styleClass="sidebar-subtitle"/>
 
     <Button maxWidth="Infinity" onAction="#showDashboard" styleClass="sidebar-button" text="Dashboard"/>
-    <Button maxWidth="Infinity" onAction="#showProducts" styleClass="sidebar-button" text="Products"/>
-    <Button maxWidth="Infinity" onAction="#showInventory" styleClass="sidebar-button" text="Inventory"/>
-    <Button maxWidth="Infinity" onAction="#showSalesHistory" styleClass="sidebar-button" text="Sales History"/>
-    <Button maxWidth="Infinity" onAction="#showReports" styleClass="sidebar-button" text="Reports"/>
+    <Button fx:id="productsButton" maxWidth="Infinity" onAction="#showProducts" styleClass="sidebar-button" text="Products"/>
+    <Button fx:id="inventoryButton" maxWidth="Infinity" onAction="#showInventory" styleClass="sidebar-button" text="Inventory"/>
+    <Button fx:id="salesHistoryButton" maxWidth="Infinity" onAction="#showSalesHistory" styleClass="sidebar-button" text="Sales History"/>
+    <Button fx:id="employeeSalesButton" maxWidth="Infinity" onAction="#showEmployeeSales" styleClass="sidebar-button" text="My Sales Today"/>
+    <Button fx:id="reportsButton" maxWidth="Infinity" onAction="#showReports" styleClass="sidebar-button" text="Reports"/>
+    <Button fx:id="usersButton" maxWidth="Infinity" onAction="#showUsers" styleClass="sidebar-button" text="Users"/>
     <Button maxWidth="Infinity" onAction="#logout" styleClass="sidebar-button-danger" text="Logout"/>
 </VBox>

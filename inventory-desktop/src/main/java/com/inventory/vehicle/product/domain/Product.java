@@ -33,6 +33,9 @@ public class Product {
     @JoinColumn(name = "vehicle_type_id", nullable = false)
     private VehicleType vehicleType;
 
+    @Column(nullable = false, unique = true, length = 100)
+    private String modelCode;
+
     @Column(nullable = false)
     private int currentStock;
 
@@ -86,6 +89,14 @@ public class Product {
 
     public void setVehicleType(VehicleType vehicleType) {
         this.vehicleType = vehicleType;
+    }
+
+    public String getModelCode() {
+        return modelCode;
+    }
+
+    public void setModelCode(String modelCode) {
+        this.modelCode = modelCode;
     }
 
     public int getCurrentStock() {

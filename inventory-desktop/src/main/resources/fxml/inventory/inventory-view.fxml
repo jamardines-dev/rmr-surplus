@@ -6,6 +6,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
@@ -19,27 +20,51 @@
         <fx:include source="../common/sidebar.fxml"/>
     </left>
     <center>
-        <VBox spacing="16" styleClass="content-area">
+        <VBox spacing="18" styleClass="content-area">
             <padding>
                 <Insets bottom="28" left="28" right="28" top="28"/>
             </padding>
+
             <VBox spacing="4" styleClass="header">
                 <Label text="Inventory" styleClass="title"/>
-                <Label text="Current stock levels for active products." styleClass="subtitle"/>
+                <Label text="Current stock levels and inventory value for active products." styleClass="subtitle"/>
             </VBox>
-            <TableView fx:id="inventoryTable" prefHeight="460">
-                <columns>
-                    <TableColumn fx:id="idColumn" prefWidth="60" text="ID"/>
-                    <TableColumn fx:id="productNameColumn" prefWidth="260" text="Product"/>
-                    <TableColumn fx:id="brandColumn" prefWidth="170" text="Part Brand"/>
-                    <TableColumn fx:id="vehicleTypeColumn" prefWidth="170" text="Vehicle Brand"/>
-                    <TableColumn fx:id="stockColumn" prefWidth="120" text="Stock"/>
-                    <TableColumn fx:id="priceColumn" prefWidth="130" text="Unit Price"/>
-                </columns>
-            </TableView>
-            <HBox styleClass="toolbar">
-                <Button onAction="#refreshInventory" text="Refresh"/>
-            </HBox>
+
+            <GridPane hgap="12" vgap="12">
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <Label text="Active Products" styleClass="summary-label"/>
+                    <Label fx:id="activeProductsLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Label text="Total Stock" styleClass="summary-label"/>
+                    <Label fx:id="totalStockLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="220" spacing="6" styleClass="summary-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                    <Label text="Inventory Value" styleClass="summary-label"/>
+                    <Label fx:id="inventoryValueLabel" text="₱0.00" styleClass="summary-value"/>
+                </VBox>
+                <VBox minWidth="170" spacing="6" styleClass="summary-card" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                    <Label text="Out of Stock" styleClass="summary-label"/>
+                    <Label fx:id="outOfStockLabel" text="0" styleClass="summary-value"/>
+                </VBox>
+            </GridPane>
+
+            <VBox spacing="12" styleClass="section" VBox.vgrow="ALWAYS">
+                <HBox spacing="10" styleClass="toolbar">
+                    <Label text="Current Inventory" styleClass="section-title"/>
+                    <Button onAction="#refreshInventory" styleClass="secondary" text="Refresh"/>
+                </HBox>
+                <TableView fx:id="inventoryTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="idColumn" prefWidth="70" text="ID"/>
+                        <TableColumn fx:id="productNameColumn" prefWidth="300" text="Product"/>
+                        <TableColumn fx:id="brandColumn" prefWidth="180" text="Brand"/>
+                        <TableColumn fx:id="vehicleTypeColumn" prefWidth="180" text="Vehicle Type"/>
+                        <TableColumn fx:id="stockColumn" prefWidth="120" text="Stock"/>
+                        <TableColumn fx:id="priceColumn" prefWidth="150" text="Unit Price"/>
+                    </columns>
+                </TableView>
+            </VBox>
         </VBox>
     </center>
 </BorderPane>

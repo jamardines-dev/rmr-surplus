@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.inventory.vehicle.auth.presentation.UserManagementController"
+            prefHeight="720"
+            prefWidth="1180"
+            styleClass="screen">
+    <left>
+        <fx:include source="../common/sidebar.fxml"/>
+    </left>
+    <center>
+        <VBox spacing="16" styleClass="content-area">
+            <padding>
+                <Insets bottom="28" left="28" right="28" top="28"/>
+            </padding>
+            <VBox spacing="4" styleClass="header">
+                <Label text="Users and Login History" styleClass="title"/>
+                <Label text="Manage accounts and review employee login date and time." styleClass="subtitle"/>
+            </VBox>
+
+            <HBox spacing="16" VBox.vgrow="ALWAYS">
+                <VBox spacing="12" HBox.hgrow="ALWAYS">
+                    <Label text="Accounts" styleClass="section-title"/>
+                    <TableView fx:id="usersTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="userIdColumn" prefWidth="70" text="ID"/>
+                            <TableColumn fx:id="usernameColumn" prefWidth="180" text="Username"/>
+                            <TableColumn fx:id="roleColumn" prefWidth="130" text="Role"/>
+                            <TableColumn fx:id="statusColumn" prefWidth="110" text="Status"/>
+                            <TableColumn fx:id="createdAtColumn" prefWidth="220" text="Created"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <VBox minWidth="400" prefWidth="430" spacing="14" styleClass="panel">
+                    <padding>
+                        <Insets bottom="18" left="18" right="18" top="18"/>
+                    </padding>
+                    <Label text="Create or Edit Account" styleClass="section-title"/>
+
+                    <VBox spacing="6">
+                        <Label text="Username" styleClass="field-label"/>
+                        <TextField fx:id="usernameField" maxWidth="Infinity"/>
+                    </VBox>
+
+                    <VBox spacing="6">
+                        <Label text="Role" styleClass="field-label"/>
+                        <ComboBox fx:id="roleComboBox" maxWidth="Infinity"/>
+                    </VBox>
+
+                    <VBox spacing="6">
+                        <Label text="Login Access" styleClass="field-label"/>
+                        <CheckBox fx:id="activeCheckBox" text="Can log in"/>
+                    </VBox>
+
+                    <VBox spacing="6">
+                        <Label text="Password" styleClass="field-label"/>
+                        <PasswordField fx:id="newPasswordField"
+                                       maxWidth="Infinity"
+                                       promptText="Required for create, blank keeps old"/>
+                    </VBox>
+
+                    <HBox spacing="10">
+                        <Button maxWidth="Infinity" onAction="#createAccount" text="Create Account" HBox.hgrow="ALWAYS"/>
+                        <Button maxWidth="Infinity" onAction="#saveAccount" text="Save Changes" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Button maxWidth="Infinity" onAction="#clearForm" styleClass="secondary" text="Clear Form" HBox.hgrow="ALWAYS"/>
+                        <Button maxWidth="Infinity" onAction="#deleteAccount" styleClass="danger" text="Delete Account" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <Label fx:id="messageLabel" wrapText="true" styleClass="message"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="12" VBox.vgrow="ALWAYS">
+                <HBox spacing="10" styleClass="toolbar">
+                    <Label text="Login History" styleClass="section-title"/>
+                    <Button onAction="#refresh" styleClass="secondary" text="Refresh"/>
+                </HBox>
+                <TableView fx:id="loginHistoryTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="loginUsernameColumn" prefWidth="220" text="Username"/>
+                        <TableColumn fx:id="loginRoleColumn" prefWidth="140" text="Role"/>
+                        <TableColumn fx:id="loginDateColumn" prefWidth="180" text="Date"/>
+                        <TableColumn fx:id="loginTimeColumn" prefWidth="140" text="Time"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

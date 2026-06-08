@@ -7,8 +7,8 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
@@ -27,88 +27,68 @@
             </padding>
             <VBox spacing="4" styleClass="header">
                 <Label text="Products" styleClass="title"/>
-                <Label text="Search products, add items to cart, and manage inventory." styleClass="subtitle"/>
+                <Label text="Manage product details and pricing." styleClass="subtitle"/>
             </VBox>
 
             <HBox spacing="10" styleClass="section">
-                <TextField fx:id="searchField" onAction="#searchProduct" prefWidth="360" promptText="Search product, part brand, or vehicle brand"/>
+                <TextField fx:id="searchField" onAction="#searchProduct" prefWidth="420" promptText="Search product, brand, vehicle type, or model code"/>
                 <Button onAction="#searchProduct" text="Search Product"/>
                 <Button onAction="#clearSearch" styleClass="secondary" text="Clear Search"/>
             </HBox>
 
-            <VBox spacing="10" styleClass="section">
-                <Label text="Product List" styleClass="section-title"/>
-                <TableView fx:id="productTable" prefHeight="340">
-                    <columns>
-                        <TableColumn fx:id="idColumn" prefWidth="60" text="ID"/>
-                        <TableColumn fx:id="productNameColumn" prefWidth="260" text="Product"/>
-                        <TableColumn fx:id="brandColumn" prefWidth="170" text="Part Brand"/>
-                        <TableColumn fx:id="vehicleTypeColumn" prefWidth="180" text="Vehicle Brand"/>
-                        <TableColumn fx:id="stockColumn" prefWidth="110" text="Stock"/>
-                        <TableColumn fx:id="priceColumn" prefWidth="130" text="Unit Price"/>
-                    </columns>
-                </TableView>
-            </VBox>
-
-            <HBox spacing="16">
-                <VBox spacing="12" styleClass="section">
-                    <Label text="Product Details" styleClass="section-title"/>
-                    <GridPane hgap="12" vgap="12">
-                        <Label text="Product" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextField fx:id="productNameField" prefWidth="260" promptText="Starter solenoid" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        <Label text="Part Brand" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="brandField" prefWidth="260" promptText="Denso" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                        <Label text="Vehicle Brand" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                        <TextField fx:id="vehicleTypeField" prefWidth="260" promptText="Toyota" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                        <Label text="Unit Price" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                        <TextField fx:id="priceField" prefWidth="260" promptText="1200.00" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                    </GridPane>
-                    <HBox styleClass="toolbar">
-                        <Button onAction="#createProduct" text="Create"/>
-                        <Button onAction="#updateProduct" text="Update"/>
-                        <Button onAction="#clearForm" styleClass="secondary" text="Clear"/>
-                        <Button onAction="#deleteProduct" styleClass="danger" text="Delete"/>
-                    </HBox>
-                    <GridPane hgap="12" vgap="12">
-                        <Label text="Restock Product" styleClass="section-title" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <Label text="Quantity" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                        <TextField fx:id="restockQuantityField" prefWidth="160" promptText="10" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                        <Button onAction="#restockProduct" text="Restock Product" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-                    </GridPane>
-                </VBox>
-
-                <VBox spacing="12" styleClass="section" HBox.hgrow="ALWAYS">
-                    <VBox spacing="6">
-                        <Label text="Checkout" styleClass="section-title"/>
-                        <Label fx:id="selectedSellProductLabel" text="Selected product: none" styleClass="subtitle"/>
-                    </VBox>
-
-                    <GridPane hgap="12" vgap="12">
-                        <Label text="Seller Name" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                        <TextField fx:id="sellerNameField" prefWidth="230" promptText="Seller name" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                        <Label text="Quantity" styleClass="field-label" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-                        <TextField fx:id="sellQuantityField" prefWidth="100" promptText="1" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
-                    </GridPane>
-
-                    <HBox styleClass="toolbar">
-                        <Button onAction="#addSelectedProductToCart" text="Add to Cart"/>
-                        <Button onAction="#undoLastSale" styleClass="secondary" text="Undo by Seller"/>
-                    </HBox>
-
-                    <Label text="Cart" styleClass="section-title"/>
-                    <TableView fx:id="cartTable" prefHeight="180">
+            <HBox spacing="16" VBox.vgrow="ALWAYS">
+                <VBox spacing="10" styleClass="section" HBox.hgrow="ALWAYS">
+                    <Label text="Product List" styleClass="section-title"/>
+                    <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="cartProductColumn" prefWidth="260" text="Product"/>
-                            <TableColumn fx:id="cartQuantityColumn" prefWidth="90" text="Qty"/>
-                            <TableColumn fx:id="cartPriceColumn" prefWidth="110" text="Unit Price"/>
-                            <TableColumn fx:id="cartTotalColumn" prefWidth="110" text="Total"/>
+                            <TableColumn fx:id="idColumn" prefWidth="60" text="ID"/>
+                            <TableColumn fx:id="productNameColumn" prefWidth="260" text="Product"/>
+                            <TableColumn fx:id="brandColumn" prefWidth="150" text="Brand"/>
+                            <TableColumn fx:id="vehicleTypeColumn" prefWidth="160" text="Vehicle Type"/>
+                            <TableColumn fx:id="modelCodeColumn" prefWidth="130" text="Model Code"/>
+                            <TableColumn fx:id="stockColumn" prefWidth="90" text="Stock"/>
+                            <TableColumn fx:id="priceColumn" prefWidth="130" text="Default Price"/>
                         </columns>
                     </TableView>
-                    <HBox styleClass="toolbar">
-                        <Label fx:id="cartTotalLabel" text="Cart total: 0.00" styleClass="cart-total"/>
-                        <Button onAction="#sellCart" text="Sell Cart"/>
-                        <Button onAction="#removeSelectedCartItem" styleClass="secondary" text="Remove Item"/>
-                        <Button onAction="#clearCart" styleClass="secondary" text="Clear Cart"/>
+                </VBox>
+
+                <VBox minWidth="390" prefWidth="430" spacing="14" styleClass="section">
+                    <Label text="Product Details" styleClass="section-title"/>
+
+                    <VBox spacing="6">
+                        <Label text="Product" styleClass="field-label"/>
+                        <TextField fx:id="productNameField" maxWidth="Infinity" promptText="Starter solenoid"/>
+                    </VBox>
+                    <VBox spacing="6">
+                        <Label text="Brand" styleClass="field-label"/>
+                        <TextField fx:id="brandField" maxWidth="Infinity" promptText="Mitsubishi"/>
+                    </VBox>
+                    <VBox spacing="6">
+                        <Label text="Vehicle Type" styleClass="field-label"/>
+                        <TextField fx:id="vehicleTypeField" maxWidth="Infinity" promptText="10 Wheeler"/>
+                    </VBox>
+                    <VBox spacing="6">
+                        <Label text="Model Code" styleClass="field-label"/>
+                        <TextField fx:id="modelCodeField" maxWidth="Infinity" promptText="8M20"/>
+                    </VBox>
+                    <HBox spacing="10">
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Stock Quantity" styleClass="field-label"/>
+                            <TextField fx:id="stockQuantityField" maxWidth="Infinity" promptText="10"/>
+                        </VBox>
+                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                            <Label text="Default Price" styleClass="field-label"/>
+                            <TextField fx:id="priceField" maxWidth="Infinity" promptText="1200.00"/>
+                        </VBox>
+                    </HBox>
+
+                    <HBox spacing="10">
+                        <Button maxWidth="Infinity" onAction="#createProduct" text="Create" HBox.hgrow="ALWAYS"/>
+                        <Button maxWidth="Infinity" onAction="#updateProduct" text="Update" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox spacing="10">
+                        <Button maxWidth="Infinity" onAction="#clearForm" styleClass="secondary" text="Clear" HBox.hgrow="ALWAYS"/>
+                        <Button maxWidth="Infinity" onAction="#deleteProduct" styleClass="danger" text="Delete" HBox.hgrow="ALWAYS"/>
                     </HBox>
                 </VBox>
             </HBox>

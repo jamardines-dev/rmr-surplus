@@ -21,8 +21,22 @@ public class SessionService {
         return currentUser == null ? "system" : currentUser.getUsername();
     }
 
+    public String getCurrentDisplayName() {
+        return getCurrentUsername();
+    }
+
+    public Long getCurrentUserId() {
+        return currentUser == null ? null : currentUser.getId();
+    }
+
     public Role getCurrentRole() {
         return currentUser == null ? null : currentUser.getRole();
+    }
+
+    public void updateCurrentUsername(String username) {
+        if (currentUser != null) {
+            currentUser.setUsername(username);
+        }
     }
 
     public boolean isLoggedIn() {

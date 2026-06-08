@@ -15,7 +15,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>vehicle-inventory-system</name>
-    <description>Client-server Vehicle Parts Inventory and Sales Monitoring System</description>
+    <description>Client-server RMR SURPLUS Inventory and Sales Monitoring System</description>
 
     <modules>
         <module>inventory-server</module>

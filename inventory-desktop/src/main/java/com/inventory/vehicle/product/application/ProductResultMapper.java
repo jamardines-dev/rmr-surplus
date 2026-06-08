@@ -13,8 +13,10 @@ final class ProductResultMapper {
                 product.getProductName(),
                 product.getBrand().getName(),
                 product.getVehicleType().getName(),
+                product.getModelCode(),
                 product.getCurrentStock(),
-                product.getUnitPrice()
+                product.getUnitPrice(),
+                product.isActive()
         );
     }
 }

@@ -9,16 +9,20 @@ public class ProductTableRow {
     private final String productName;
     private final String brandName;
     private final String vehicleTypeName;
+    private final String modelCode;
     private final int currentStock;
     private final BigDecimal unitPrice;
+    private final boolean active;
 
     public ProductTableRow(ProductResult product) {
         this.id = product.id();
         this.productName = product.productName();
         this.brandName = product.brandName();
         this.vehicleTypeName = product.vehicleTypeName();
+        this.modelCode = product.modelCode();
         this.currentStock = product.currentStock();
         this.unitPrice = product.unitPrice();
+        this.active = product.active();
     }
 
     public Long getId() {
@@ -37,6 +41,10 @@ public class ProductTableRow {
         return vehicleTypeName;
     }
 
+    public String getModelCode() {
+        return modelCode;
+    }
+
     public int getCurrentStock() {
         return currentStock;
     }
@@ -45,8 +53,12 @@ public class ProductTableRow {
         return unitPrice;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
     @Override
     public String toString() {
-        return productName + " (" + brandName + ")";
+        return productName + " (" + modelCode + ")";
     }
 }
