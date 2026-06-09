@@ -10,12 +10,13 @@ echo ========================================================
 if exist "staging" rmdir /s /q "staging"
 mkdir staging
 copy target\inventory-desktop-0.0.1-SNAPSHOT.jar staging\
+xcopy target\libs staging\libs\ /E /I
 
 echo ========================================================
 echo Packaging into Windows App using jpackage...
 echo ========================================================
 if exist "windows-app" rmdir /s /q "windows-app"
-jpackage --type app-image --name "InventoryDesktop" --input staging --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar --dest windows-app
+jpackage --type app-image --name "InventoryDesktop" --input staging --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar --dest windows-app --win-console
 
 echo ========================================================
 echo Done! Your Windows App is ready in the 'windows-app\InventoryDesktop' folder.
