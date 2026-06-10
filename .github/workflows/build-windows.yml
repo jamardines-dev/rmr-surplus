@@ -57,7 +57,6 @@ jobs:
             --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar `
             --main-class com.inventory.vehicle.InventoryApplication `
             --dest windows-app `
-            --win-console `
             --java-options "-DDB_URL=$env:DB_URL" `
             --java-options "-DDB_USERNAME=$env:DB_USERNAME" `
             --java-options "-DDB_PASSWORD=$env:DB_PASSWORD"
