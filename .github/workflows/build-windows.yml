@@ -42,6 +42,7 @@ jobs:
       - name: Stage JAR
         shell: pwsh
         run: |
+          Remove-Item -Recurse -Force staging, windows-app -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path staging | Out-Null
           Copy-Item rmr\target\inventory-desktop-0.0.1-SNAPSHOT.jar staging\
           Copy-Item rmr\target\libs staging\libs -Recurse
@@ -54,7 +55,9 @@ jobs:
             --name "RMR Inventory" `
             --input staging `
             --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar `
+            --main-class com.inventory.vehicle.InventoryApplication `
             --dest windows-app `
+            --win-console `
             --java-options "-DDB_URL=$env:DB_URL" `
             --java-options "-DDB_USERNAME=$env:DB_USERNAME" `
             --java-options "-DDB_PASSWORD=$env:DB_PASSWORD"
