@@ -8,32 +8,64 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      DB_URL: ${{ secrets.DB_URL }}
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: maven
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
 
-    - name: Build with Maven
-      run: .\mvnw.cmd clean package -DskipTests
+      - name: Build with Maven
+        run: .\mvnw.cmd -pl rmr clean package -DskipTests
 
-    - name: Stage JAR
-      run: |
-        mkdir staging
-        copy inventory-desktop\target\inventory-desktop-0.0.1-SNAPSHOT.jar staging\
-        xcopy inventory-desktop\target\libs staging\libs\ /E /I
+      - name: Validate runtime database settings
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:DB_URL)) {
+            throw "Missing GitHub secret DB_URL"
+          }
+          if ([string]::IsNullOrWhiteSpace($env:DB_USERNAME)) {
+            throw "Missing GitHub secret DB_USERNAME"
+          }
+          if ([string]::IsNullOrWhiteSpace($env:DB_PASSWORD)) {
+            throw "Missing GitHub secret DB_PASSWORD"
+          }
 
-    - name: Create Windows App Image
-      run: |
-        jpackage --type app-image --name "InventoryDesktop" --input staging --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar --dest windows-app --win-console
+      - name: Stage JAR
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path staging | Out-Null
+          Copy-Item rmr\target\inventory-desktop-0.0.1-SNAPSHOT.jar staging\
+          Copy-Item rmr\target\libs staging\libs -Recurse
 
-    - name: Upload Windows App Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: InventoryDesktop-Windows
-        path: windows-app/InventoryDesktop
+      - name: Create Windows App Image
+        shell: pwsh
+        run: |
+          jpackage `
+            --type app-image `
+            --name "RMR Inventory" `
+            --input staging `
+            --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar `
+            --dest windows-app `
+            --java-options "-DDB_URL=$env:DB_URL" `
+            --java-options "-DDB_USERNAME=$env:DB_USERNAME" `
+            --java-options "-DDB_PASSWORD=$env:DB_PASSWORD"
+
+      - name: Zip Windows App
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "windows-app\RMR Inventory" -DestinationPath "RMR-Inventory-windows.zip" -Force
+
+      - name: Upload Windows App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RMR-Inventory-windows
+          path: RMR-Inventory-windows.zip

@@ -71,6 +71,18 @@ The script creates:
 
 Send the `.zip` file to the client. After unzipping, they can open `RMR Inventory.exe` directly.
 
+## Build Windows App With GitHub Actions
+
+Before running the GitHub Actions workflow, add these repository secrets in GitHub:
+
+- `DB_URL`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+
+Use `Settings` > `Secrets and variables` > `Actions` > `New repository secret`.
+
+Then run the `Build Windows EXE` workflow from the `Actions` tab. When it succeeds, download the `RMR-Inventory-windows` artifact. It contains `RMR-Inventory-windows.zip`, which your client can unzip and run.
+
 ## Admin PC Server Mode
 
 The Admin/Main PC should be the only computer with the database password. Start PostgreSQL on that computer, then run the backend server:
