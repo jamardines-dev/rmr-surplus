@@ -19,7 +19,7 @@
 
     <modules>
         <module>inventory-server</module>
-        <module>inventory-desktop</module>
+        <module>rmr</module>
     </modules>
 
     <properties>

@@ -16,10 +16,10 @@ echo ========================================================
 echo Packaging into Windows App using jpackage...
 echo ========================================================
 if exist "windows-app" rmdir /s /q "windows-app"
-jpackage --type app-image --name "InventoryDesktop" --input staging --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar --dest windows-app --win-console
+jpackage --type app-image --name "rmr desktop" --input staging --main-jar inventory-desktop-0.0.1-SNAPSHOT.jar --dest windows-app --win-console
 
 echo ========================================================
-echo Done! Your Windows App is ready in the 'windows-app\InventoryDesktop' folder.
-echo You can run the InventoryDesktop.exe from there.
+echo Done! Your Windows App is ready in the 'windows-app\rmr desktop' folder.
+echo You can run the rmr desktop.exe from there.
 echo ========================================================
 pause

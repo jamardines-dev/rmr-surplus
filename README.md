@@ -12,7 +12,7 @@ Or run the JavaFX Maven plugin directly from the desktop module:
 
 ```sh
 export DB_PASSWORD=jamjan08
-./mvnw -pl inventory-desktop javafx:run
+./mvnw -pl rmr javafx:run
 ```
 
 The local Maven wrapper also redirects this root command to the desktop module:
@@ -21,7 +21,55 @@ The local Maven wrapper also redirects this root command to the desktop module:
 ./mvnw javafx:run
 ```
 
-The root project is a Maven parent project. The JavaFX plugin is configured inside `inventory-desktop`, so the wrapper selects that module for JavaFX runs.
+The root project is a Maven parent project. The JavaFX plugin is configured inside `rmr`, so the wrapper selects that module for JavaFX runs.
+
+## Export The Desktop App For macOS
+
+Create a `.env` file in the project root before packaging:
+
+```sh
+DB_URL=jdbc:postgresql://localhost:5432/inventory_db
+DB_USERNAME=postgres
+DB_PASSWORD=your_database_password
+```
+
+Build a double-clickable macOS app:
+
+```sh
+./scripts/build-macos-app.sh
+```
+
+The script creates:
+
+- `dist/macos-YYYYMMDD-HHMMSS/RMR Inventory.app`
+- `dist/RMR-Inventory-macos-YYYYMMDD-HHMMSS.zip`
+
+Send the `.zip` file to the client. After unzipping, they can open `RMR Inventory.app` directly.
+
+## Export The Desktop App For Windows
+
+Build this on a Windows computer with JDK 21 installed. The Windows build creates a folder that contains `RMR Inventory.exe`.
+
+Use the same `.env` file in the project root:
+
+```sh
+DB_URL=jdbc:postgresql://localhost:5432/inventory_db
+DB_USERNAME=postgres
+DB_PASSWORD=your_database_password
+```
+
+Run:
+
+```bat
+scripts\build-windows-app.bat
+```
+
+The script creates:
+
+- `dist\windows-YYYYMMDD-HHMMSS\RMR Inventory\RMR Inventory.exe`
+- `dist\RMR-Inventory-windows-YYYYMMDD-HHMMSS.zip`
+
+Send the `.zip` file to the client. After unzipping, they can open `RMR Inventory.exe` directly.
 
 ## Admin PC Server Mode
 

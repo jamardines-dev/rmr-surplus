@@ -6,4 +6,4 @@ set -a
 set +a
 
 echo "Starting RMR SURPLUS desktop app..."
-./mvnw -pl inventory-desktop javafx:run
+./mvnw -pl rmr javafx:run
