@@ -58,7 +58,7 @@ public class SceneManager {
 
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
+        scrollPane.setFitToHeight(false);
         scrollPane.setPannable(true);
         scrollPane.getStyleClass().add("content-scroll");
         borderPane.setCenter(scrollPane);

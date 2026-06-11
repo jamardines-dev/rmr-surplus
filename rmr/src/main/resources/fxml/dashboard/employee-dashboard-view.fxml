@@ -22,9 +22,9 @@
     </left>
 
     <center>
-        <VBox spacing="18" styleClass="content-area">
+        <VBox spacing="14" styleClass="content-area">
             <padding>
-                <Insets bottom="28" left="28" right="28" top="28"/>
+                <Insets bottom="24" left="24" right="24" top="24"/>
             </padding>
 
             <VBox spacing="4" styleClass="header">
@@ -32,7 +32,7 @@
                 <Label text="Search, add products to cart, and confirm sales." styleClass="subtitle"/>
             </VBox>
 
-            <HBox spacing="16" VBox.vgrow="ALWAYS">
+            <HBox spacing="16">
                 <VBox spacing="12" styleClass="section" HBox.hgrow="ALWAYS">
                     <Label text="Find Product" styleClass="section-title"/>
                     <HBox spacing="10" styleClass="toolbar">
@@ -55,8 +55,8 @@
                     </TableView>
                 </VBox>
 
-                <VBox minWidth="430" prefWidth="460" spacing="14">
-                    <VBox spacing="12" styleClass="section">
+                <VBox minWidth="430" prefWidth="460" spacing="12">
+                    <VBox spacing="10" styleClass="section">
                         <Label text="Selected Product" styleClass="section-title"/>
                         <VBox spacing="4">
                             <Label fx:id="selectedProductLabel" text="No product selected" wrapText="true" styleClass="cart-total"/>
@@ -91,11 +91,11 @@
                         <Button maxWidth="Infinity" onAction="#addToCart" text="Add to Cart"/>
                     </VBox>
 
-                    <VBox spacing="12" styleClass="section" VBox.vgrow="ALWAYS">
+                    <VBox spacing="10" styleClass="section">
                         <HBox spacing="10" styleClass="toolbar">
                             <Label text="Cart" styleClass="section-title"/>
                         </HBox>
-                        <TableView fx:id="cartTable" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="cartTable" minHeight="120" prefHeight="150">
                             <columns>
                                 <TableColumn fx:id="cartProductColumn" prefWidth="170" text="Product"/>
                                 <TableColumn fx:id="cartModelCodeColumn" prefWidth="90" text="Model"/>
