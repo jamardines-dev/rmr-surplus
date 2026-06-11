@@ -203,6 +203,11 @@
     -fx-background-color: #f6f8fb;
 }
 
+.content-scroll,
+.content-scroll > .viewport {
+    -fx-background-color: #f6f8fb;
+}
+
 .summary-card {
     -fx-background-color: #ffffff;
     -fx-border-color: #e2e8f0;
