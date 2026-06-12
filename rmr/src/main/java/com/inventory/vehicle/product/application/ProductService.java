@@ -52,6 +52,9 @@ public class ProductService {
         product.setModelCode(command.modelCode().trim());
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
+        product.setProductImage(command.productImage());
+        product.setProductImageType(trimToNull(command.productImageType()));
+        product.setLastRestockedDate(command.lastRestockedDate());
 
         Product savedProduct = productRepository.save(product);
         auditService.record("CREATE_PRODUCT", "Created product " + savedProduct.getProductName(), sessionService.getCurrentUsername());
@@ -72,6 +75,9 @@ public class ProductService {
         product.setModelCode(command.modelCode().trim());
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
+        product.setProductImage(command.productImage());
+        product.setProductImageType(trimToNull(command.productImageType()));
+        product.setLastRestockedDate(command.lastRestockedDate());
 
         Product savedProduct = productRepository.save(product);
         auditService.record("UPDATE_PRODUCT", "Updated product " + savedProduct.getProductName(), sessionService.getCurrentUsername());
@@ -159,6 +165,13 @@ public class ProductService {
         if (sessionService.getCurrentRole() != Role.ADMIN) {
             throw new BusinessException("Only admins can manage products.");
         }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
 }

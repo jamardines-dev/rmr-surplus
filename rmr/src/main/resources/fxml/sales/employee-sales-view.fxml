@@ -38,6 +38,7 @@
             <VBox spacing="10" styleClass="section" VBox.vgrow="ALWAYS">
                 <TableView fx:id="mySalesTable" maxHeight="Infinity" VBox.vgrow="ALWAYS">
                     <columns>
+                        <TableColumn fx:id="saleImageColumn" prefWidth="80" text="Photo"/>
                         <TableColumn fx:id="saleTimeColumn" prefWidth="90" text="Time"/>
                         <TableColumn fx:id="saleProductColumn" prefWidth="250" text="Product"/>
                         <TableColumn fx:id="saleBrandColumn" prefWidth="140" text="Brand"/>

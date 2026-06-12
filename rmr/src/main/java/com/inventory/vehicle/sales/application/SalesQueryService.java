@@ -36,6 +36,12 @@ public class SalesQueryService {
     }
 
     @Transactional(readOnly = true)
+    public List<Sale> findSalesBetween(LocalDate startDate, LocalDate endDate) {
+        requireAdmin();
+        return saleRepository.findBySoldDateBetweenOrderByCreatedAtDesc(startDate, endDate);
+    }
+
+    @Transactional(readOnly = true)
     public List<Sale> findAllSales() {
         requireAdmin();
         return saleRepository.findAllByOrderByCreatedAtDesc();
@@ -145,6 +151,8 @@ public class SalesQueryService {
                 saleItem.getProduct().getBrand().getName(),
                 saleItem.getProduct().getVehicleType().getName(),
                 saleItem.getProduct().getModelCode(),
+                saleItem.getProduct().getProductImage(),
+                saleItem.getProduct().getProductImageType(),
                 saleItem.getQuantitySold(),
                 saleItem.getPriceSold(),
                 saleItem.getTotalAmount()

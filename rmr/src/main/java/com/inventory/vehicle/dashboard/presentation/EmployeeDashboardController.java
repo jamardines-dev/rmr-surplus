@@ -18,13 +18,20 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -68,6 +75,9 @@ public class EmployeeDashboardController extends SidebarController {
     private Label selectedDetailsLabel;
 
     @FXML
+    private ImageView selectedProductImageView;
+
+    @FXML
     private TextField quantityField;
 
     @FXML
@@ -84,6 +94,9 @@ public class EmployeeDashboardController extends SidebarController {
 
     @FXML
     private Label totalAmountLabel;
+
+    @FXML
+    private ComboBox<String> receiptTypeComboBox;
 
     @FXML
     private TableView<EmployeeCartItemRow> cartTable;
@@ -149,6 +162,9 @@ public class EmployeeDashboardController extends SidebarController {
         quantityField.textProperty().addListener((observable, oldValue, newValue) -> updateSalePreview());
         priceField.setEditable(false);
         priceField.setFocusTraversable(false);
+        selectedProductImageView.setPickOnBounds(true);
+        receiptTypeComboBox.getItems().setAll("Delivery Receipt", "Official Receipt");
+        receiptTypeComboBox.getSelectionModel().selectFirst();
 
         employeeNameLabel.setText(sessionService.getCurrentDisplayName());
         dateLabel.setText(LocalDate.now().toString());
@@ -245,6 +261,7 @@ public class EmployeeDashboardController extends SidebarController {
             Long saleId = recordSaleService.recordCartSale(new RecordCartSaleCommand(
                     sessionService.getCurrentDisplayName(),
                     LocalDate.now(),
+                    receiptTypeComboBox.getValue(),
                     cartItems.stream()
                             .map(item -> new CartSaleItemCommand(item.getProductId(), item.getQuantity(), item.getPriceSold()))
                             .toList()
@@ -311,9 +328,39 @@ public class EmployeeDashboardController extends SidebarController {
                 + " | " + product.getModelCode()
                 + " | Stock: " + product.getCurrentStock()
                 + " | Default price: " + MoneyFormat.peso(product.getUnitPrice()));
+        selectedProductImageView.setImage(product.getImage());
         quantityField.setText("1");
         priceField.setText(product.getUnitPrice().toPlainString());
         updateSalePreview();
+    }
+
+    @FXML
+    private void openSelectedProductImage() {
+        Image image = selectedProductImageView.getImage();
+        if (image == null) {
+            messageLabel.setText("No product photo available.");
+            return;
+        }
+
+        ImageView imageView = new ImageView(image);
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(760);
+        imageView.setFitHeight(520);
+
+        ScrollPane imageScroll = new ScrollPane(imageView);
+        imageScroll.setFitToWidth(true);
+        imageScroll.setFitToHeight(true);
+        imageScroll.setPannable(true);
+
+        VBox content = new VBox(12, new Label(selectedProductLabel.getText()), imageScroll);
+        content.setPrefSize(820, 600);
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Product Photo");
+        dialog.setHeaderText(selectedProductLabel.getText());
+        dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.getDialogPane().setContent(content);
+        dialog.showAndWait();
     }
 
     private void updateSalePreview() {

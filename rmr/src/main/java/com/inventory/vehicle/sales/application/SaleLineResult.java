@@ -12,6 +12,8 @@ public record SaleLineResult(
         String brandName,
         String vehicleTypeName,
         String modelCode,
+        byte[] productImage,
+        String productImageType,
         int quantitySold,
         BigDecimal priceSold,
         BigDecimal totalAmount

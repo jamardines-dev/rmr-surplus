@@ -10,17 +10,25 @@ import com.inventory.vehicle.product.application.ProductQueryService;
 import com.inventory.vehicle.product.application.ProductResult;
 import com.inventory.vehicle.product.application.ProductService;
 import com.inventory.vehicle.product.application.UpdateProductCommand;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.time.LocalDate;
 import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -29,9 +37,14 @@ public class ProductListController extends SidebarController {
     private final ProductQueryService productQueryService;
     private final ProductService productService;
     private List<ProductTableRow> allProducts = List.of();
+    private byte[] selectedImage;
+    private String selectedImageType;
 
     @FXML
     private TableView<ProductTableRow> productTable;
+
+    @FXML
+    private TableColumn<ProductTableRow, Image> imageColumn;
 
     @FXML
     private TableColumn<ProductTableRow, Long> idColumn;
@@ -55,6 +68,9 @@ public class ProductListController extends SidebarController {
     private TableColumn<ProductTableRow, BigDecimal> priceColumn;
 
     @FXML
+    private TableColumn<ProductTableRow, String> restockedColumn;
+
+    @FXML
     private TextField searchField;
 
     @FXML
@@ -76,6 +92,15 @@ public class ProductListController extends SidebarController {
     private TextField priceField;
 
     @FXML
+    private DatePicker lastRestockedDatePicker;
+
+    @FXML
+    private ImageView productImageView;
+
+    @FXML
+    private Label imageNameLabel;
+
+    @FXML
     private Label messageLabel;
 
     public ProductListController(
@@ -90,6 +115,8 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private void initialize() {
+        imageColumn.setCellValueFactory(new PropertyValueFactory<>("image"));
+        imageColumn.setCellFactory(column -> imageCell());
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
         brandColumn.setCellValueFactory(new PropertyValueFactory<>("brandName"));
@@ -98,6 +125,7 @@ public class ProductListController extends SidebarController {
         stockColumn.setCellValueFactory(new PropertyValueFactory<>("currentStock"));
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
         priceColumn.setCellFactory(column -> moneyCell());
+        restockedColumn.setCellValueFactory(new PropertyValueFactory<>("lastRestockedDateText"));
         productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         productTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, selectedProduct) -> {
@@ -181,6 +209,47 @@ public class ProductListController extends SidebarController {
         modelCodeField.clear();
         stockQuantityField.clear();
         priceField.clear();
+        lastRestockedDatePicker.setValue(null);
+        selectedImage = null;
+        selectedImageType = null;
+        productImageView.setImage(null);
+        imageNameLabel.setText("No photo selected");
+    }
+
+    @FXML
+    private void chooseProductImage() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Product Photo");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                "Images",
+                "*.png",
+                "*.jpg",
+                "*.jpeg",
+                "*.gif"
+        ));
+        File file = fileChooser.showOpenDialog(productTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        try {
+            selectedImage = Files.readAllBytes(file.toPath());
+            selectedImageType = Files.probeContentType(file.toPath());
+            productImageView.setImage(new Image(file.toURI().toString()));
+            imageNameLabel.setText(file.getName());
+            messageLabel.setText("Photo selected.");
+        } catch (IOException exception) {
+            messageLabel.setText("Could not load product photo.");
+        }
+    }
+
+    @FXML
+    private void removeProductImage() {
+        selectedImage = null;
+        selectedImageType = null;
+        productImageView.setImage(null);
+        imageNameLabel.setText("No photo selected");
+        messageLabel.setText("Photo removed.");
     }
 
     private boolean confirm(String title, String message) {
@@ -247,6 +316,11 @@ public class ProductListController extends SidebarController {
         modelCodeField.setText(product.getModelCode());
         stockQuantityField.setText(String.valueOf(product.getCurrentStock()));
         priceField.setText(product.getUnitPrice().toPlainString());
+        lastRestockedDatePicker.setValue(product.getLastRestockedDate());
+        selectedImage = product.getProductImage();
+        selectedImageType = product.getProductImageType();
+        productImageView.setImage(product.getImage());
+        imageNameLabel.setText(product.getImage() == null ? "No photo selected" : "Saved product photo");
     }
 
     private CreateProductCommand toCreateCommand() {
@@ -256,11 +330,13 @@ public class ProductListController extends SidebarController {
                 vehicleTypeField.getText(),
                 modelCodeField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
-                parsePrice());
+                parsePrice(),
+                selectedImage,
+                selectedImageType,
+                lastRestockedDatePicker.getValue());
     }
 
     private UpdateProductCommand toUpdateCommand(Long productId) {
-        ProductTableRow selectedProduct = productTable.getSelectionModel().getSelectedItem();
         return new UpdateProductCommand(
                 productId,
                 productNameField.getText(),
@@ -268,7 +344,10 @@ public class ProductListController extends SidebarController {
                 vehicleTypeField.getText(),
                 modelCodeField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
-                parsePrice());
+                parsePrice(),
+                selectedImage,
+                selectedImageType,
+                lastRestockedDatePicker.getValue());
     }
 
     private int parseInteger(String value, String fieldName) {
@@ -305,6 +384,29 @@ public class ProductListController extends SidebarController {
             protected void updateItem(BigDecimal amount, boolean empty) {
                 super.updateItem(amount, empty);
                 setText(empty ? null : MoneyFormat.peso(amount));
+            }
+        };
+    }
+
+    private TableCell<ProductTableRow, Image> imageCell() {
+        return new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                imageView.setFitWidth(52);
+                imageView.setFitHeight(42);
+                imageView.setPreserveRatio(true);
+            }
+
+            @Override
+            protected void updateItem(Image image, boolean empty) {
+                super.updateItem(image, empty);
+                if (empty || image == null) {
+                    setGraphic(null);
+                    return;
+                }
+                imageView.setImage(image);
+                setGraphic(imageView);
             }
         };
     }

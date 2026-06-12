@@ -14,6 +14,8 @@ public class SaleTableRow {
     private final String sellerName;
     private final LocalDate soldDate;
     private final BigDecimal totalAmount;
+    private final String receiptType;
+    private final String receiptTypeText;
     private final String encodedBy;
     private final LocalDateTime createdAt;
     private final String createdAtText;
@@ -23,6 +25,8 @@ public class SaleTableRow {
         this.sellerName = sale.getSellerName();
         this.soldDate = sale.getSoldDate();
         this.totalAmount = sale.getTotalAmount();
+        this.receiptType = sale.getReceiptType();
+        this.receiptTypeText = formatReceiptType(sale.getReceiptType());
         this.encodedBy = sale.getEncodedBy();
         this.createdAt = sale.getCreatedAt();
         this.createdAtText = sale.getCreatedAt().format(CREATED_AT_FORMATTER);
@@ -44,6 +48,14 @@ public class SaleTableRow {
         return totalAmount;
     }
 
+    public String getReceiptType() {
+        return receiptType;
+    }
+
+    public String getReceiptTypeText() {
+        return receiptTypeText;
+    }
+
     public String getEncodedBy() {
         return encodedBy;
     }
@@ -54,5 +66,12 @@ public class SaleTableRow {
 
     public String getCreatedAtText() {
         return createdAtText;
+    }
+
+    private String formatReceiptType(String value) {
+        if ("OFFICIAL_RECEIPT".equals(value)) {
+            return "Official Receipt";
+        }
+        return "Delivery Receipt";
     }
 }

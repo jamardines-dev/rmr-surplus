@@ -20,7 +20,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -30,9 +33,13 @@ import org.springframework.stereotype.Controller;
 public class SalesHistoryController extends SidebarController {
 
     private final SalesQueryService salesQueryService;
+    private List<SaleTableRow> currentSales = List.of();
 
     @FXML
     private DatePicker soldDatePicker;
+
+    @FXML
+    private TextField searchField;
 
     @FXML
     private TableView<SaleTableRow> salesTable;
@@ -48,6 +55,9 @@ public class SalesHistoryController extends SidebarController {
 
     @FXML
     private TableColumn<SaleTableRow, BigDecimal> totalColumn;
+
+    @FXML
+    private TableColumn<SaleTableRow, String> receiptTypeColumn;
 
     @FXML
     private TableColumn<SaleTableRow, String> encodedByColumn;
@@ -67,6 +77,7 @@ public class SalesHistoryController extends SidebarController {
         soldDateColumn.setCellValueFactory(new PropertyValueFactory<>("soldDate"));
         totalColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         totalColumn.setCellFactory(column -> moneyCell());
+        receiptTypeColumn.setCellValueFactory(new PropertyValueFactory<>("receiptTypeText"));
         encodedByColumn.setCellValueFactory(new PropertyValueFactory<>("encodedBy"));
         createdAtColumn.setCellValueFactory(new PropertyValueFactory<>("createdAtText"));
         salesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -79,6 +90,7 @@ public class SalesHistoryController extends SidebarController {
             });
             return row;
         });
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> applySearch());
         loadAllSales();
     }
 
@@ -89,7 +101,7 @@ public class SalesHistoryController extends SidebarController {
             return;
         }
 
-        salesTable.getItems().setAll(salesQueryService.findSalesByDate(soldDatePicker.getValue())
+        setSales(salesQueryService.findSalesByDate(soldDatePicker.getValue())
                 .stream()
                 .map(SaleTableRow::new)
                 .toList());
@@ -98,10 +110,45 @@ public class SalesHistoryController extends SidebarController {
     @FXML
     private void loadAllSales() {
         soldDatePicker.setValue(null);
-        salesTable.getItems().setAll(salesQueryService.findAllSales()
+        setSales(salesQueryService.findAllSales()
                 .stream()
                 .map(SaleTableRow::new)
                 .toList());
+    }
+
+    @FXML
+    private void loadTodaySales() {
+        LocalDate today = LocalDate.now();
+        soldDatePicker.setValue(today);
+        setSales(salesQueryService.findSalesByDate(today)
+                .stream()
+                .map(SaleTableRow::new)
+                .toList());
+    }
+
+    @FXML
+    private void loadWeeklySales() {
+        LocalDate today = LocalDate.now();
+        soldDatePicker.setValue(null);
+        setSales(salesQueryService.findSalesBetween(today.minusDays(6), today)
+                .stream()
+                .map(SaleTableRow::new)
+                .toList());
+    }
+
+    @FXML
+    private void loadMonthlySales() {
+        LocalDate today = LocalDate.now();
+        soldDatePicker.setValue(null);
+        setSales(salesQueryService.findSalesBetween(today.withDayOfMonth(1), today)
+                .stream()
+                .map(SaleTableRow::new)
+                .toList());
+    }
+
+    @FXML
+    private void searchSales() {
+        applySearch();
     }
 
     @FXML
@@ -124,6 +171,11 @@ public class SalesHistoryController extends SidebarController {
         TableView<EmployeeSaleDetailRow> detailTable = new TableView<>();
         detailTable.setPrefSize(920, 420);
         detailTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+        TableColumn<EmployeeSaleDetailRow, Image> imageColumn = new TableColumn<>("Photo");
+        imageColumn.setCellValueFactory(new PropertyValueFactory<>("image"));
+        imageColumn.setPrefWidth(80);
+        imageColumn.setCellFactory(column -> imageCell());
 
         TableColumn<EmployeeSaleDetailRow, String> soldAtColumn = new TableColumn<>("Time");
         soldAtColumn.setCellValueFactory(new PropertyValueFactory<>("soldAt"));
@@ -160,6 +212,7 @@ public class SalesHistoryController extends SidebarController {
         totalColumn.setCellFactory(column -> moneyCell());
 
         detailTable.getColumns().clear();
+        detailTable.getColumns().add(imageColumn);
         detailTable.getColumns().add(soldAtColumn);
         detailTable.getColumns().add(productColumn);
         detailTable.getColumns().add(brandColumn);
@@ -185,6 +238,32 @@ public class SalesHistoryController extends SidebarController {
 
         loadEmployeeSalesForDateRange(sellerName, LocalDate.now(), LocalDate.now(), detailTable, summaryLabel);
         dialog.showAndWait();
+    }
+
+    private void setSales(List<SaleTableRow> sales) {
+        currentSales = sales;
+        applySearch();
+    }
+
+    private void applySearch() {
+        String searchText = searchField.getText();
+        if (searchText == null || searchText.isBlank()) {
+            salesTable.getItems().setAll(currentSales);
+            return;
+        }
+
+        String normalizedSearch = searchText.trim().toLowerCase();
+        salesTable.getItems().setAll(currentSales.stream()
+                .filter(sale -> contains(String.valueOf(sale.getId()), normalizedSearch)
+                        || contains(sale.getSellerName(), normalizedSearch)
+                        || contains(sale.getEncodedBy(), normalizedSearch)
+                        || contains(sale.getReceiptTypeText(), normalizedSearch)
+                        || contains(sale.getSoldDate().toString(), normalizedSearch))
+                .toList());
+    }
+
+    private boolean contains(String value, String searchText) {
+        return value != null && value.toLowerCase().contains(searchText);
     }
 
     private void loadEmployeeSalesForDateRange(
@@ -233,6 +312,29 @@ public class SalesHistoryController extends SidebarController {
             protected void updateItem(BigDecimal amount, boolean empty) {
                 super.updateItem(amount, empty);
                 setText(empty ? null : MoneyFormat.peso(amount));
+            }
+        };
+    }
+
+    private <S> TableCell<S, Image> imageCell() {
+        return new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                imageView.setFitWidth(52);
+                imageView.setFitHeight(42);
+                imageView.setPreserveRatio(true);
+            }
+
+            @Override
+            protected void updateItem(Image image, boolean empty) {
+                super.updateItem(image, empty);
+                if (empty || image == null) {
+                    setGraphic(null);
+                    return;
+                }
+                imageView.setImage(image);
+                setGraphic(imageView);
             }
         };
     }

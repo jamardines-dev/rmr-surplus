@@ -1,6 +1,7 @@
 package com.inventory.vehicle.product.application;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record ProductResult(
         Long id,
@@ -10,6 +11,9 @@ public record ProductResult(
         String modelCode,
         int currentStock,
         BigDecimal unitPrice,
+        byte[] productImage,
+        String productImageType,
+        LocalDate lastRestockedDate,
         boolean active
 ) {
 }

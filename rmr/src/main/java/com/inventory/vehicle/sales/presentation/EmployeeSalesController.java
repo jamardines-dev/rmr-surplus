@@ -19,6 +19,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -38,6 +40,9 @@ public class EmployeeSalesController extends SidebarController {
 
     @FXML
     private TableColumn<EmployeeSaleTableRow, String> saleTimeColumn;
+
+    @FXML
+    private TableColumn<EmployeeSaleTableRow, Image> saleImageColumn;
 
     @FXML
     private TableColumn<EmployeeSaleTableRow, String> saleProductColumn;
@@ -76,6 +81,8 @@ public class EmployeeSalesController extends SidebarController {
 
     @FXML
     private void initialize() {
+        saleImageColumn.setCellValueFactory(new PropertyValueFactory<>("image"));
+        saleImageColumn.setCellFactory(column -> imageCell());
         saleTimeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
         saleProductColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
         saleBrandColumn.setCellValueFactory(new PropertyValueFactory<>("brandName"));
@@ -200,6 +207,29 @@ public class EmployeeSalesController extends SidebarController {
             protected void updateItem(BigDecimal amount, boolean empty) {
                 super.updateItem(amount, empty);
                 setText(empty ? null : MoneyFormat.peso(amount));
+            }
+        };
+    }
+
+    private <S> TableCell<S, Image> imageCell() {
+        return new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                imageView.setFitWidth(52);
+                imageView.setFitHeight(42);
+                imageView.setPreserveRatio(true);
+            }
+
+            @Override
+            protected void updateItem(Image image, boolean empty) {
+                super.updateItem(image, empty);
+                if (empty || image == null) {
+                    setGraphic(null);
+                    return;
+                }
+                imageView.setImage(image);
+                setGraphic(imageView);
             }
         };
     }

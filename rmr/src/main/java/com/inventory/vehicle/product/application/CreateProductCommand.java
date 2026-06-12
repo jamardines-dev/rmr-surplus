@@ -1,6 +1,7 @@
 package com.inventory.vehicle.product.application;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record CreateProductCommand(
         String productName,
@@ -8,6 +9,9 @@ public record CreateProductCommand(
         String vehicleTypeName,
         String modelCode,
         int currentStock,
-        BigDecimal unitPrice
+        BigDecimal unitPrice,
+        byte[] productImage,
+        String productImageType,
+        LocalDate lastRestockedDate
 ) {
 }

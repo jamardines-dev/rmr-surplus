@@ -59,6 +59,7 @@ public class RecordSaleService {
         sale.setSoldDate(command.soldDate());
         sale.setTotalAmount(saleTotal);
         sale.setEncodedBy(sessionService.getCurrentUsername());
+        sale.setReceiptType(normalizeReceiptType(command.receiptType()));
         Sale savedSale = saleRepository.save(sale);
 
         for (CartSaleItemCommand item : command.items()) {
@@ -166,6 +167,7 @@ public class RecordSaleService {
         if (command.soldDate() == null) {
             throw new BusinessException("Sold date is required.");
         }
+        normalizeReceiptType(command.receiptType());
         if (command.items() == null || command.items().isEmpty()) {
             throw new BusinessException("Add at least one product to the cart.");
         }
@@ -186,6 +188,16 @@ public class RecordSaleService {
         if (sessionService.getCurrentRole() != Role.EMPLOYEE) {
             throw new BusinessException("Only employees can record or undo sales.");
         }
+    }
+
+    private String normalizeReceiptType(String receiptType) {
+        if ("Official Receipt".equalsIgnoreCase(receiptType) || "OFFICIAL_RECEIPT".equalsIgnoreCase(receiptType)) {
+            return "OFFICIAL_RECEIPT";
+        }
+        if ("Delivery Receipt".equalsIgnoreCase(receiptType) || "DELIVERY_RECEIPT".equalsIgnoreCase(receiptType)) {
+            return "DELIVERY_RECEIPT";
+        }
+        throw new BusinessException("Select Delivery Receipt or Official Receipt.");
     }
 
     private StockMovement createSaleMovement(Product product, int quantity, int previousStock, int newStock, Long saleId) {

@@ -16,6 +16,9 @@ final class ProductResultMapper {
                 product.getModelCode(),
                 product.getCurrentStock(),
                 product.getUnitPrice(),
+                product.getProductImage(),
+                product.getProductImageType(),
+                product.getLastRestockedDate(),
                 product.isActive()
         );
     }

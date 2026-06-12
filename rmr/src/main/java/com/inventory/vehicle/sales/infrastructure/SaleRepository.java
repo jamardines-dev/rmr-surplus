@@ -10,6 +10,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     List<Sale> findBySoldDateOrderByCreatedAtDesc(LocalDate soldDate);
 
+    List<Sale> findBySoldDateBetweenOrderByCreatedAtDesc(LocalDate startDate, LocalDate endDate);
+
     Optional<Sale> findFirstBySellerNameIgnoreCaseOrderByCreatedAtDesc(String sellerName);
 
     List<Sale> findBySellerNameIgnoreCase(String sellerName);

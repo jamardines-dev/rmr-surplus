@@ -31,6 +31,9 @@ public class Sale {
     @Column(nullable = false, length = 100)
     private String encodedBy;
 
+    @Column(nullable = false, length = 30)
+    private String receiptType = "DELIVERY_RECEIPT";
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -73,6 +76,14 @@ public class Sale {
 
     public void setEncodedBy(String encodedBy) {
         this.encodedBy = encodedBy;
+    }
+
+    public String getReceiptType() {
+        return receiptType;
+    }
+
+    public void setReceiptType(String receiptType) {
+        this.receiptType = receiptType;
     }
 
     public LocalDateTime getCreatedAt() {

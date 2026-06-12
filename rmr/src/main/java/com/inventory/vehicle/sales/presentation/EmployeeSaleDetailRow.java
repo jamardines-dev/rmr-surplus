@@ -1,8 +1,10 @@
 package com.inventory.vehicle.sales.presentation;
 
 import com.inventory.vehicle.sales.application.SaleLineResult;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import javafx.scene.image.Image;
 
 public class EmployeeSaleDetailRow {
 
@@ -13,6 +15,7 @@ public class EmployeeSaleDetailRow {
     private final String brandName;
     private final String vehicleTypeName;
     private final String modelCode;
+    private final byte[] productImage;
     private final int quantitySold;
     private final BigDecimal priceSold;
     private final BigDecimal totalAmount;
@@ -23,6 +26,7 @@ public class EmployeeSaleDetailRow {
         this.brandName = saleLine.brandName();
         this.vehicleTypeName = saleLine.vehicleTypeName();
         this.modelCode = saleLine.modelCode();
+        this.productImage = saleLine.productImage();
         this.quantitySold = saleLine.quantitySold();
         this.priceSold = saleLine.priceSold();
         this.totalAmount = saleLine.totalAmount();
@@ -46,6 +50,13 @@ public class EmployeeSaleDetailRow {
 
     public String getModelCode() {
         return modelCode;
+    }
+
+    public Image getImage() {
+        if (productImage == null || productImage.length == 0) {
+            return null;
+        }
+        return new Image(new ByteArrayInputStream(productImage));
     }
 
     public int getQuantitySold() {

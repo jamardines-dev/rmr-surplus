@@ -38,10 +38,12 @@ public class SceneManager {
         stage.setTitle("RMR SURPLUS - " + view.getTitle());
         stage.setScene(scene);
         Rectangle2D bounds = getCurrentScreenBounds();
+        stage.setX(bounds.getMinX());
+        stage.setY(bounds.getMinY());
         stage.setMinWidth(Math.min(1024, bounds.getWidth()));
         stage.setMinHeight(Math.min(700, bounds.getHeight()));
-        stage.setWidth(Math.min(1280, bounds.getWidth()));
-        stage.setHeight(Math.min(820, bounds.getHeight()));
+        stage.setWidth(bounds.getWidth());
+        stage.setHeight(bounds.getHeight());
         stage.setMaximized(true);
         stage.show();
     }
@@ -58,7 +60,7 @@ public class SceneManager {
 
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(false);
+        scrollPane.setFitToHeight(true);
         scrollPane.setPannable(true);
         scrollPane.getStyleClass().add("content-scroll");
         borderPane.setCenter(scrollPane);

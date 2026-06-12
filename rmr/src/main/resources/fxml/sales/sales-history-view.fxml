@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -20,25 +21,30 @@
         <fx:include source="../common/sidebar.fxml"/>
     </left>
     <center>
-        <VBox spacing="16" styleClass="content-area">
+        <VBox spacing="14" styleClass="content-area">
             <padding>
-                <Insets bottom="28" left="28" right="28" top="28"/>
+                <Insets bottom="24" left="24" right="24" top="24"/>
             </padding>
             <VBox spacing="4" styleClass="header">
                 <Label text="Sales History" styleClass="title"/>
                 <Label text="Review sales and filter by date." styleClass="subtitle"/>
             </VBox>
-            <HBox styleClass="toolbar">
+            <HBox spacing="10" styleClass="toolbar">
+                <TextField fx:id="searchField" onAction="#searchSales" prefWidth="280" promptText="Search seller, receipt, or transaction ID"/>
                 <DatePicker fx:id="soldDatePicker" prefWidth="180"/>
+                <Button onAction="#loadTodaySales" text="Today"/>
+                <Button onAction="#loadWeeklySales" text="Weekly"/>
+                <Button onAction="#loadMonthlySales" text="Monthly"/>
                 <Button onAction="#loadSalesByDate" text="Filter Date"/>
-                <Button onAction="#loadAllSales" styleClass="secondary" text="All Sales"/>
+                <Button onAction="#loadAllSales" styleClass="secondary" text="All"/>
             </HBox>
-            <TableView fx:id="salesTable" prefHeight="460">
+            <TableView fx:id="salesTable" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="idColumn" prefWidth="70" text="ID"/>
                     <TableColumn fx:id="sellerColumn" prefWidth="180" text="Seller"/>
                     <TableColumn fx:id="soldDateColumn" prefWidth="140" text="Sold Date"/>
                     <TableColumn fx:id="totalColumn" prefWidth="130" text="Total"/>
+                    <TableColumn fx:id="receiptTypeColumn" prefWidth="150" text="Receipt"/>
                     <TableColumn fx:id="encodedByColumn" prefWidth="150" text="Encoded By"/>
                     <TableColumn fx:id="createdAtColumn" prefWidth="240" text="Created At"/>
                 </columns>

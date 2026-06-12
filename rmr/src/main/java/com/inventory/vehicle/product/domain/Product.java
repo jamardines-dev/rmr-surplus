@@ -12,6 +12,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -41,6 +42,14 @@ public class Product {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
+
+    @Column(name = "product_image", columnDefinition = "bytea")
+    private byte[] productImage;
+
+    @Column(length = 80)
+    private String productImageType;
+
+    private LocalDate lastRestockedDate;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -113,6 +122,30 @@ public class Product {
 
     public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public byte[] getProductImage() {
+        return productImage;
+    }
+
+    public void setProductImage(byte[] productImage) {
+        this.productImage = productImage;
+    }
+
+    public String getProductImageType() {
+        return productImageType;
+    }
+
+    public void setProductImageType(String productImageType) {
+        this.productImageType = productImageType;
+    }
+
+    public LocalDate getLastRestockedDate() {
+        return lastRestockedDate;
+    }
+
+    public void setLastRestockedDate(LocalDate lastRestockedDate) {
+        this.lastRestockedDate = lastRestockedDate;
     }
 
     public boolean isActive() {
