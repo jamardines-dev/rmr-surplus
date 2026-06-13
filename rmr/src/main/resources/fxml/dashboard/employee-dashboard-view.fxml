@@ -2,15 +2,14 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
@@ -40,72 +39,27 @@
                     <HBox spacing="10" styleClass="toolbar">
                         <TextField fx:id="searchField"
                                    onAction="#searchProduct"
-                                   promptText="Search product, brand, vehicle type, or model code"
+                                   promptText="Search product, brand, Vehicle, or Model"
                                    HBox.hgrow="ALWAYS"/>
                         <Button onAction="#searchProduct" text="Search"/>
                         <Button onAction="#clearSearch" styleClass="secondary" text="Clear"/>
                     </HBox>
-                    <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
-                        <columns>
-                            <TableColumn fx:id="productNameColumn" prefWidth="230" text="Product"/>
-                            <TableColumn fx:id="brandColumn" prefWidth="140" text="Brand"/>
-                            <TableColumn fx:id="vehicleTypeColumn" prefWidth="150" text="Vehicle Type"/>
-                            <TableColumn fx:id="modelCodeColumn" prefWidth="120" text="Model Code"/>
-                            <TableColumn fx:id="stockColumn" prefWidth="80" text="Stock"/>
-                            <TableColumn fx:id="priceColumn" prefWidth="120" text="Default Price"/>
-                        </columns>
-                    </TableView>
+                    <ScrollPane fitToWidth="true" pannable="true" styleClass="product-card-scroll" VBox.vgrow="ALWAYS">
+                        <TilePane fx:id="productCardPane"
+                                  hgap="12"
+                                  prefColumns="3"
+                                  tileAlignment="TOP_LEFT"
+                                  vgap="12"/>
+                    </ScrollPane>
                 </VBox>
 
                 <VBox minWidth="430" prefWidth="460" spacing="12">
-                    <VBox spacing="8" styleClass="section">
-                        <Label text="Selected Product" styleClass="section-title"/>
-                        <ImageView fx:id="selectedProductImageView"
-                                   fitHeight="96"
-                                   fitWidth="160"
-                                   onMouseClicked="#openSelectedProductImage"
-                                   preserveRatio="true"
-                                   styleClass="product-image-preview"/>
-                        <VBox spacing="4">
-                            <Label fx:id="selectedProductLabel" text="No product selected" wrapText="true" styleClass="cart-total"/>
-                            <Label fx:id="selectedDetailsLabel" text="Select a product to view stock and price." wrapText="true" styleClass="subtitle"/>
-                        </VBox>
-
-                        <HBox spacing="10">
-                            <VBox spacing="6" HBox.hgrow="ALWAYS">
-                                <Label text="Quantity Sold" styleClass="field-label"/>
-                                <TextField fx:id="quantityField" maxWidth="Infinity" promptText="1"/>
-                            </VBox>
-                            <VBox spacing="6" HBox.hgrow="ALWAYS">
-                                <Label text="Default Price" styleClass="field-label"/>
-                                <TextField fx:id="priceField" maxWidth="Infinity" promptText="1200.00"/>
-                            </VBox>
-                        </HBox>
-
-                        <GridPane hgap="16" vgap="8">
-                            <Label text="Employee" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                            <Label fx:id="employeeNameLabel" text="-" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                            <Label text="Date" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                            <Label fx:id="dateLabel" text="-" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                            <Label text="Time" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                            <Label fx:id="timeLabel" text="-" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                        </GridPane>
-
-                        <VBox spacing="4" styleClass="summary-card">
-                            <Label text="Line Total" styleClass="summary-label"/>
-                            <Label fx:id="totalAmountLabel" text="₱0.00" styleClass="summary-value"/>
-                        </VBox>
-                        <VBox spacing="6">
-                            <Label text="Receipt Type" styleClass="field-label"/>
-                            <ComboBox fx:id="receiptTypeComboBox" maxWidth="Infinity"/>
-                        </VBox>
-
-                        <Button maxWidth="Infinity" onAction="#addToCart" text="Add to Cart"/>
-                    </VBox>
-
                     <VBox spacing="10" styleClass="section" VBox.vgrow="ALWAYS">
-                        <HBox spacing="10" styleClass="toolbar">
-                            <Label text="Cart" styleClass="section-title"/>
+                        <Label text="Cart" styleClass="section-title"/>
+                        <HBox spacing="8" styleClass="toolbar">
+                            <TextField fx:id="cartQuantityField" promptText="Qty" prefWidth="80"/>
+                            <Button onAction="#updateCartItemQuantity" text="Update Qty"/>
+                            <Button onAction="#removeCartItem" styleClass="secondary" text="Remove"/>
                         </HBox>
                         <TableView fx:id="cartTable" minHeight="130" prefHeight="170" VBox.vgrow="ALWAYS">
                             <columns>
@@ -122,7 +76,6 @@
                         </VBox>
                         <HBox spacing="10">
                             <Button maxWidth="Infinity" onAction="#confirmSale" text="Confirm Sale" HBox.hgrow="ALWAYS"/>
-                            <Button maxWidth="Infinity" onAction="#removeCartItem" styleClass="secondary" text="Remove Item" HBox.hgrow="ALWAYS"/>
                             <Button maxWidth="Infinity" onAction="#clearCart" styleClass="secondary" text="Clear Cart" HBox.hgrow="ALWAYS"/>
                         </HBox>
                         <Label fx:id="messageLabel" minHeight="24" wrapText="true" styleClass="message"/>

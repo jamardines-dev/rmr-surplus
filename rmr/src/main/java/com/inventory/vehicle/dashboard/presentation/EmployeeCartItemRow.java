@@ -55,6 +55,10 @@ public class EmployeeCartItemRow {
         return priceSold.multiply(BigDecimal.valueOf(quantity));
     }
 
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
     public void addQuantity(int quantity) {
         this.quantity += quantity;
     }

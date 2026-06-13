@@ -42,8 +42,8 @@
                         <TableColumn fx:id="saleTimeColumn" prefWidth="90" text="Time"/>
                         <TableColumn fx:id="saleProductColumn" prefWidth="250" text="Product"/>
                         <TableColumn fx:id="saleBrandColumn" prefWidth="140" text="Brand"/>
-                        <TableColumn fx:id="saleVehicleTypeColumn" prefWidth="150" text="Vehicle Type"/>
-                        <TableColumn fx:id="saleModelCodeColumn" prefWidth="120" text="Model Code"/>
+                        <TableColumn fx:id="saleVehicleTypeColumn" prefWidth="150" text="Vehicle"/>
+                        <TableColumn fx:id="saleModelCodeColumn" prefWidth="120" text="Model"/>
                         <TableColumn fx:id="saleQuantityColumn" prefWidth="80" text="Qty"/>
                         <TableColumn fx:id="salePriceColumn" prefWidth="120" text="Price"/>
                         <TableColumn fx:id="saleTotalColumn" prefWidth="130" text="Total"/>

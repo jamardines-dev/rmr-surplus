@@ -54,14 +54,27 @@
                     <Label text="Current Inventory" styleClass="section-title"/>
                     <Button onAction="#refreshInventory" styleClass="secondary" text="Refresh"/>
                 </HBox>
-                <TableView fx:id="inventoryTable" VBox.vgrow="ALWAYS">
+                <TableView fx:id="inventoryTable" prefHeight="260" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="idColumn" prefWidth="70" text="ID"/>
                         <TableColumn fx:id="productNameColumn" prefWidth="300" text="Product"/>
                         <TableColumn fx:id="brandColumn" prefWidth="180" text="Brand"/>
-                        <TableColumn fx:id="vehicleTypeColumn" prefWidth="180" text="Vehicle Type"/>
+                        <TableColumn fx:id="vehicleTypeColumn" prefWidth="180" text="Vehicle"/>
                         <TableColumn fx:id="stockColumn" prefWidth="120" text="Stock"/>
                         <TableColumn fx:id="priceColumn" prefWidth="150" text="Unit Price"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <VBox spacing="12" styleClass="section" VBox.vgrow="ALWAYS">
+                <Label text="DR Restock History" styleClass="section-title"/>
+                <TableView fx:id="drRestockTable" prefHeight="220" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="drNumberColumn" prefWidth="180" text="DR No."/>
+                        <TableColumn fx:id="drItemCountColumn" prefWidth="140" text="Products"/>
+                        <TableColumn fx:id="drTotalQuantityColumn" prefWidth="140" text="Total Qty"/>
+                        <TableColumn fx:id="drDateColumn" prefWidth="170" text="Date"/>
+                        <TableColumn fx:id="drUserColumn" prefWidth="140" text="User"/>
                     </columns>
                 </TableView>
             </VBox>

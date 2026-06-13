@@ -40,6 +40,12 @@ public class InventoryQueryService {
         return stockMovementRepository.findByProductIdOrderByCreatedAtDesc(productId);
     }
 
+    @Transactional(readOnly = true)
+    public List<StockMovement> findDrRestockMovements() {
+        requireAdmin();
+        return stockMovementRepository.findRestocksWithDrNumbers();
+    }
+
     private void requireAdmin() {
         if (!sessionService.isLoggedIn()) {
             throw new BusinessException("You must be logged in.");

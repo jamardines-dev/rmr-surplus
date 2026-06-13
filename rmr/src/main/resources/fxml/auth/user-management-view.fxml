@@ -90,6 +90,9 @@
             <VBox spacing="12" VBox.vgrow="ALWAYS">
                 <HBox spacing="10" styleClass="toolbar">
                     <Label text="Login History" styleClass="section-title"/>
+                    <Button onAction="#showAllLoginHistory" styleClass="secondary" text="All"/>
+                    <Button onAction="#showWeeklyLoginHistory" styleClass="secondary" text="Week"/>
+                    <Button onAction="#showMonthlyLoginHistory" styleClass="secondary" text="Month"/>
                     <Button onAction="#refresh" styleClass="secondary" text="Refresh"/>
                 </HBox>
                 <TableView fx:id="loginHistoryTable" VBox.vgrow="ALWAYS">

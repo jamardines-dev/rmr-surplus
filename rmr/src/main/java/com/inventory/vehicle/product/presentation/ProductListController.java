@@ -9,17 +9,28 @@ import com.inventory.vehicle.product.application.CreateProductCommand;
 import com.inventory.vehicle.product.application.ProductQueryService;
 import com.inventory.vehicle.product.application.ProductResult;
 import com.inventory.vehicle.product.application.ProductService;
+import com.inventory.vehicle.product.application.RestockNewProductsCommand;
 import com.inventory.vehicle.product.application.UpdateProductCommand;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.List;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -28,6 +39,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.springframework.stereotype.Controller;
 
@@ -130,9 +144,7 @@ public class ProductListController extends SidebarController {
 
         productTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, selectedProduct) -> {
             if (selectedProduct != null) {
-                fillForm(selectedProduct);
-                messageLabel.setText("Selected " + selectedProduct.getProductName()
-                        + " for product management and stock updates.");
+                messageLabel.setText("Selected " + selectedProduct.getProductName() + ".");
             }
         });
         searchField.textProperty().addListener((observable, oldValue, newValue) -> applySearch());
@@ -142,6 +154,20 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private void createProduct() {
+        openProductDetailsModal(null);
+    }
+
+    @FXML
+    private void updateProduct() {
+        ProductTableRow selectedProduct = productTable.getSelectionModel().getSelectedItem();
+        if (selectedProduct == null) {
+            messageLabel.setText("Select a product to update.");
+            return;
+        }
+        openProductDetailsModal(selectedProduct);
+    }
+
+    private void saveNewProduct() {
         try {
             productService.createProduct(toCreateCommand());
             resetForm();
@@ -152,16 +178,9 @@ public class ProductListController extends SidebarController {
         }
     }
 
-    @FXML
-    private void updateProduct() {
-        ProductTableRow selectedProduct = productTable.getSelectionModel().getSelectedItem();
-        if (selectedProduct == null) {
-            messageLabel.setText("Select a product to update.");
-            return;
-        }
-
+    private void saveProductUpdate(Long productId) {
         try {
-            productService.updateProduct(toUpdateCommand(selectedProduct.getId()));
+            productService.updateProduct(toUpdateCommand(productId));
             resetForm();
             refreshProducts();
             messageLabel.setText("Product updated.");
@@ -203,17 +222,23 @@ public class ProductListController extends SidebarController {
 
     private void resetForm() {
         productTable.getSelectionModel().clearSelection();
-        productNameField.clear();
-        brandField.clear();
-        vehicleTypeField.clear();
-        modelCodeField.clear();
-        stockQuantityField.clear();
-        priceField.clear();
-        lastRestockedDatePicker.setValue(null);
+        if (productNameField != null) {
+            productNameField.clear();
+            brandField.clear();
+            vehicleTypeField.clear();
+            modelCodeField.clear();
+            stockQuantityField.clear();
+            priceField.clear();
+            lastRestockedDatePicker.setValue(null);
+        }
         selectedImage = null;
         selectedImageType = null;
-        productImageView.setImage(null);
-        imageNameLabel.setText("No photo selected");
+        if (productImageView != null) {
+            productImageView.setImage(null);
+        }
+        if (imageNameLabel != null) {
+            imageNameLabel.setText("No photo selected");
+        }
     }
 
     @FXML
@@ -250,6 +275,341 @@ public class ProductListController extends SidebarController {
         productImageView.setImage(null);
         imageNameLabel.setText("No photo selected");
         messageLabel.setText("Photo removed.");
+    }
+
+    private void openProductDetailsModal(ProductTableRow product) {
+        initializeProductFormFields();
+        selectedImage = null;
+        selectedImageType = null;
+        if (product != null) {
+            fillForm(product);
+        }
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(product == null ? "Add Product" : "Product Details");
+        dialog.setHeaderText(product == null ? "Create a new product." : "Edit product details.");
+        dialog.initOwner(productTable.getScene().getWindow());
+
+        ButtonType saveButtonType = new ButtonType(product == null ? "Create Product" : "Save Changes", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+        Label productErrorLabel = new Label();
+        productErrorLabel.getStyleClass().add("message");
+
+        VBox content = createProductDetailsContent(productErrorLabel);
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setPrefWidth(520);
+        dialog.getDialogPane().setPrefHeight(700);
+
+        Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveButtonType);
+        saveButton.addEventFilter(ActionEvent.ACTION, event -> {
+            if (product == null) {
+                saveNewProduct();
+            } else {
+                saveProductUpdate(product.getId());
+            }
+            if (messageLabel.getText() != null
+                    && (messageLabel.getText().equals("Product created.") || messageLabel.getText().equals("Product updated."))) {
+                return;
+            }
+            event.consume();
+            productErrorLabel.setText(messageLabel.getText());
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void initializeProductFormFields() {
+        productImageView = new ImageView();
+        productImageView.setFitHeight(120);
+        productImageView.setFitWidth(190);
+        productImageView.setPreserveRatio(true);
+        productImageView.getStyleClass().add("product-image-preview");
+        imageNameLabel = new Label("No photo selected");
+        imageNameLabel.setWrapText(true);
+        imageNameLabel.getStyleClass().add("subtitle");
+        productNameField = new TextField();
+        productNameField.setPromptText("Starter solenoid");
+        brandField = new TextField();
+        brandField.setPromptText("Mitsubishi");
+        vehicleTypeField = new TextField();
+        vehicleTypeField.setPromptText("10 Wheeler");
+        modelCodeField = new TextField();
+        modelCodeField.setPromptText("8M20");
+        stockQuantityField = new TextField();
+        stockQuantityField.setPromptText("10");
+        priceField = new TextField();
+        priceField.setPromptText("1200.00");
+        lastRestockedDatePicker = new DatePicker();
+    }
+
+    private VBox createProductDetailsContent(Label productErrorLabel) {
+        VBox content = new VBox(12);
+        content.setPadding(new Insets(8, 0, 0, 0));
+        content.getStyleClass().add("modal-content");
+
+        HBox imageActions = new HBox(10);
+        Button choosePhotoButton = new Button("Choose Photo");
+        choosePhotoButton.getStyleClass().add("secondary");
+        choosePhotoButton.setMaxWidth(Double.MAX_VALUE);
+        choosePhotoButton.setOnAction(event -> chooseProductImage());
+        Button removePhotoButton = new Button("Remove");
+        removePhotoButton.getStyleClass().add("secondary");
+        removePhotoButton.setMaxWidth(Double.MAX_VALUE);
+        removePhotoButton.setOnAction(event -> removeProductImage());
+        imageActions.getChildren().addAll(choosePhotoButton, removePhotoButton);
+        HBox.setHgrow(choosePhotoButton, Priority.ALWAYS);
+        HBox.setHgrow(removePhotoButton, Priority.ALWAYS);
+
+        HBox stockPriceRow = new HBox(10);
+        stockPriceRow.getChildren().addAll(
+                labeledField("Stock Quantity", stockQuantityField),
+                labeledField("Default Price", priceField));
+
+        content.getChildren().addAll(
+                productImageView,
+                imageActions,
+                imageNameLabel,
+                labeledField("Product", productNameField),
+                labeledField("Brand", brandField),
+                labeledField("Vehicle", vehicleTypeField),
+                labeledField("Model", modelCodeField),
+                stockPriceRow,
+                labeledField("Last Restocked Date", lastRestockedDatePicker),
+                productErrorLabel);
+        return content;
+    }
+
+    @FXML
+    private void openRestockModal() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Restock / Add Stock");
+        dialog.setHeaderText("Create a new DR batch and add new products under it.");
+        dialog.initOwner(productTable.getScene().getWindow());
+
+        ButtonType applyButtonType = new ButtonType("Apply Restock", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(applyButtonType, ButtonType.CANCEL);
+
+        TextField drNumberField = new TextField();
+        drNumberField.setPromptText("DR number");
+        DatePicker restockedDatePicker = new DatePicker(LocalDate.now());
+        Button addProductButton = new Button("Add New Product");
+        Button removeProductButton = new Button("Remove Selected");
+        removeProductButton.getStyleClass().add("secondary");
+        Label restockErrorLabel = new Label();
+        restockErrorLabel.getStyleClass().add("message");
+
+        ObservableList<RestockProductRow> restockRows = FXCollections.observableArrayList();
+        TableView<RestockProductRow> restockTable = createRestockTable();
+        restockTable.setItems(restockRows);
+        addProductButton.setOnAction(event -> openRestockProductModal(restockRows, restockErrorLabel));
+        removeProductButton.setOnAction(event -> {
+            RestockProductRow selectedRow = restockTable.getSelectionModel().getSelectedItem();
+            if (selectedRow != null) {
+                restockRows.remove(selectedRow);
+                restockErrorLabel.setText("");
+            }
+        });
+
+        VBox content = new VBox(12);
+        content.setPadding(new Insets(8, 0, 0, 0));
+        content.getStyleClass().add("modal-content");
+        HBox restockMeta = new HBox(10);
+        restockMeta.getChildren().addAll(
+                labeledField("DR Number", drNumberField),
+                labeledField("Restock Date", restockedDatePicker));
+        HBox addProductRow = new HBox(10);
+        addProductRow.getStyleClass().add("modal-actions");
+        addProductRow.getChildren().addAll(addProductButton, removeProductButton);
+        content.getChildren().addAll(restockMeta, addProductRow, restockTable, restockErrorLabel);
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setPrefWidth(860);
+        dialog.getDialogPane().setPrefHeight(600);
+
+        Button applyButton = (Button) dialog.getDialogPane().lookupButton(applyButtonType);
+        applyButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                List<CreateProductCommand> products = restockRows.stream()
+                        .map(RestockProductRow::toCreateCommand)
+                        .toList();
+                productService.restockNewProducts(new RestockNewProductsCommand(
+                        drNumberField.getText(),
+                        restockedDatePicker.getValue(),
+                        products));
+                refreshProducts();
+                messageLabel.setText("Created and restocked " + products.size()
+                        + " new product(s) under DR " + drNumberField.getText().trim() + ".");
+            } catch (BusinessException | NumberFormatException exception) {
+                event.consume();
+                restockErrorLabel.setText(exception.getMessage());
+                messageLabel.setText(exception.getMessage());
+            }
+        });
+
+        dialog.showAndWait();
+    }
+
+    private VBox labeledField(String labelText, javafx.scene.Node field) {
+        VBox wrapper = new VBox(6);
+        Label label = new Label(labelText);
+        label.getStyleClass().add("field-label");
+        wrapper.getChildren().addAll(label, field);
+        HBox.setHgrow(wrapper, Priority.ALWAYS);
+        return wrapper;
+    }
+
+    private void openRestockProductModal(ObservableList<RestockProductRow> restockRows, Label restockErrorLabel) {
+        TextField productField = new TextField();
+        productField.setPromptText("Product name");
+        TextField brandField = new TextField();
+        brandField.setPromptText("Brand");
+        TextField vehicleTypeField = new TextField();
+        vehicleTypeField.setPromptText("Vehicle");
+        TextField modelCodeField = new TextField();
+        modelCodeField.setPromptText("Model");
+        TextField quantityField = new TextField();
+        quantityField.setPromptText("Restock quantity");
+        TextField priceField = new TextField();
+        priceField.setPromptText("Default price");
+        ImageView photoPreview = new ImageView();
+        photoPreview.setFitWidth(150);
+        photoPreview.setFitHeight(96);
+        photoPreview.setPreserveRatio(true);
+        photoPreview.getStyleClass().add("product-image-preview");
+        Label photoLabel = new Label("No photo selected");
+        photoLabel.getStyleClass().add("subtitle");
+        photoLabel.setWrapText(true);
+        byte[][] productImage = new byte[1][];
+        String[] productImageType = new String[1];
+        Button choosePhotoButton = new Button("Choose Photo");
+        choosePhotoButton.getStyleClass().add("secondary");
+        choosePhotoButton.setOnAction(event -> chooseRestockProductImage(photoPreview, photoLabel, productImage, productImageType));
+        Label productErrorLabel = new Label();
+        productErrorLabel.getStyleClass().add("message");
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Add New Product");
+        dialog.setHeaderText("Add one new product to this DR batch.");
+        dialog.initOwner(productTable.getScene().getWindow());
+
+        ButtonType addButtonType = new ButtonType("Save Product", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+
+        HBox quantityPriceRow = new HBox(10);
+        quantityPriceRow.getChildren().addAll(
+                labeledField("Restock Quantity", quantityField),
+                labeledField("Default Price", priceField));
+
+        VBox photoText = new VBox(8, choosePhotoButton, photoLabel);
+        HBox photoRow = new HBox(12, photoPreview, photoText);
+        photoRow.getStyleClass().add("modal-photo-row");
+
+        VBox content = new VBox(12);
+        content.setPadding(new Insets(8, 0, 0, 0));
+        content.getStyleClass().add("modal-content");
+        content.getChildren().addAll(
+                photoRow,
+                labeledField("Product", productField),
+                labeledField("Brand", brandField),
+                labeledField("Vehicle", vehicleTypeField),
+                labeledField("Model", modelCodeField),
+                quantityPriceRow,
+                productErrorLabel);
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setPrefWidth(540);
+
+        Button addButton = (Button) dialog.getDialogPane().lookupButton(addButtonType);
+        addButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                RestockProductRow row = RestockProductRow.fromFields(
+                        productField.getText(),
+                        brandField.getText(),
+                        vehicleTypeField.getText(),
+                        modelCodeField.getText(),
+                        quantityField.getText(),
+                        priceField.getText(),
+                        productImage[0],
+                        productImageType[0]);
+                if (restockRows.stream().anyMatch(existingRow -> existingRow.getModelCode().equalsIgnoreCase(row.getModelCode()))) {
+                    throw new BusinessException("Model is already in this DR batch.");
+                }
+                restockRows.add(row);
+                restockErrorLabel.setText("");
+            } catch (BusinessException | NumberFormatException exception) {
+                event.consume();
+                productErrorLabel.setText(exception.getMessage());
+            }
+        });
+
+        dialog.showAndWait();
+    }
+
+    private void chooseRestockProductImage(
+            ImageView photoPreview,
+            Label photoLabel,
+            byte[][] productImage,
+            String[] productImageType) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Product Photo");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
+                "Images",
+                "*.png",
+                "*.jpg",
+                "*.jpeg",
+                "*.gif"
+        ));
+        File file = fileChooser.showOpenDialog(productTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        try {
+            productImage[0] = Files.readAllBytes(file.toPath());
+            productImageType[0] = Files.probeContentType(file.toPath());
+            photoPreview.setImage(new Image(file.toURI().toString()));
+            photoLabel.setText(file.getName());
+        } catch (IOException exception) {
+            photoLabel.setText("Could not load product photo.");
+        }
+    }
+
+    private TableView<RestockProductRow> createRestockTable() {
+        TableView<RestockProductRow> restockTable = new TableView<>();
+        restockTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        restockTable.setPrefHeight(390);
+
+        TableColumn<RestockProductRow, Image> photoColumn = new TableColumn<>("Photo");
+        photoColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getImage()));
+        photoColumn.setCellFactory(column -> restockImageCell());
+        photoColumn.setPrefWidth(80);
+
+        TableColumn<RestockProductRow, String> productColumn = new TableColumn<>("Product");
+        productColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getProductName()));
+        productColumn.setPrefWidth(220);
+
+        TableColumn<RestockProductRow, String> brandColumn = new TableColumn<>("Brand");
+        brandColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getBrandName()));
+        brandColumn.setPrefWidth(150);
+
+        TableColumn<RestockProductRow, String> modelColumn = new TableColumn<>("Model");
+        modelColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getModelCode()));
+        modelColumn.setPrefWidth(130);
+
+        TableColumn<RestockProductRow, Integer> quantityColumn = new TableColumn<>("Qty");
+        quantityColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getQuantity()));
+        quantityColumn.setPrefWidth(90);
+
+        TableColumn<RestockProductRow, BigDecimal> priceColumn = new TableColumn<>("Price");
+        priceColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getUnitPrice()));
+        priceColumn.setCellFactory(column -> moneyCell());
+        priceColumn.setPrefWidth(120);
+
+        restockTable.getColumns().add(photoColumn);
+        restockTable.getColumns().add(productColumn);
+        restockTable.getColumns().add(brandColumn);
+        restockTable.getColumns().add(modelColumn);
+        restockTable.getColumns().add(quantityColumn);
+        restockTable.getColumns().add(priceColumn);
+        return restockTable;
     }
 
     private boolean confirm(String title, String message) {
@@ -388,6 +748,29 @@ public class ProductListController extends SidebarController {
         };
     }
 
+    private TableCell<RestockProductRow, Image> restockImageCell() {
+        return new TableCell<>() {
+            private final ImageView imageView = new ImageView();
+
+            {
+                imageView.setFitWidth(52);
+                imageView.setFitHeight(42);
+                imageView.setPreserveRatio(true);
+            }
+
+            @Override
+            protected void updateItem(Image image, boolean empty) {
+                super.updateItem(image, empty);
+                if (empty || image == null) {
+                    setGraphic(null);
+                    return;
+                }
+                imageView.setImage(image);
+                setGraphic(imageView);
+            }
+        };
+    }
+
     private TableCell<ProductTableRow, Image> imageCell() {
         return new TableCell<>() {
             private final ImageView imageView = new ImageView();
@@ -414,5 +797,146 @@ public class ProductListController extends SidebarController {
     @FXML
     private void backToDashboard() {
         showDashboard();
+    }
+
+    private static class RestockProductRow {
+
+        private final String productName;
+        private final String brandName;
+        private final String vehicleTypeName;
+        private final String modelCode;
+        private final int quantity;
+        private final BigDecimal unitPrice;
+        private final byte[] productImage;
+        private final String productImageType;
+
+        private RestockProductRow(
+                String productName,
+                String brandName,
+                String vehicleTypeName,
+                String modelCode,
+                int quantity,
+                BigDecimal unitPrice,
+                byte[] productImage,
+                String productImageType) {
+            this.productName = productName;
+            this.brandName = brandName;
+            this.vehicleTypeName = vehicleTypeName;
+            this.modelCode = modelCode;
+            this.quantity = quantity;
+            this.unitPrice = unitPrice;
+            this.productImage = productImage;
+            this.productImageType = productImageType;
+        }
+
+        private static RestockProductRow fromFields(
+                String productName,
+                String brandName,
+                String vehicleTypeName,
+                String modelCode,
+                String quantityText,
+                String priceText,
+                byte[] productImage,
+                String productImageType) {
+            String cleanProductName = requireText(productName, "Product");
+            String cleanBrandName = requireText(brandName, "Brand");
+            String cleanVehicleTypeName = requireText(vehicleTypeName, "Vehicle");
+            String cleanModelCode = requireText(modelCode, "Model");
+            int quantity = parseQuantityText(quantityText);
+            if (quantity <= 0) {
+                throw new NumberFormatException("Restock quantity must be greater than 0.");
+            }
+            BigDecimal unitPrice = parsePriceText(priceText);
+            return new RestockProductRow(
+                    cleanProductName,
+                    cleanBrandName,
+                    cleanVehicleTypeName,
+                    cleanModelCode,
+                    quantity,
+                    unitPrice,
+                    productImage,
+                    productImageType);
+        }
+
+        private static String requireText(String value, String fieldName) {
+            if (value == null || value.isBlank()) {
+                throw new BusinessException(fieldName + " is required.");
+            }
+            return value.trim();
+        }
+
+        private static int parseQuantityText(String value) {
+            if (value == null || value.isBlank()) {
+                return 0;
+            }
+            try {
+                int quantity = Integer.parseInt(value.trim());
+                if (quantity < 0) {
+                    throw new NumberFormatException();
+                }
+                return quantity;
+            } catch (NumberFormatException exception) {
+                throw new NumberFormatException("Restock quantities must be whole numbers greater than 0.");
+            }
+        }
+
+        private static BigDecimal parsePriceText(String value) {
+            if (value == null || value.isBlank()) {
+                throw new NumberFormatException("Default price is required.");
+            }
+            try {
+                BigDecimal price = new BigDecimal(value.trim());
+                if (price.compareTo(BigDecimal.ZERO) < 0) {
+                    throw new NumberFormatException();
+                }
+                return price;
+            } catch (NumberFormatException exception) {
+                throw new NumberFormatException("Default price must be a valid number.");
+            }
+        }
+
+        private String getProductName() {
+            return productName;
+        }
+
+        private String getBrandName() {
+            return brandName;
+        }
+
+        private String getVehicleTypeName() {
+            return vehicleTypeName;
+        }
+
+        private String getModelCode() {
+            return modelCode;
+        }
+
+        private int getQuantity() {
+            return quantity;
+        }
+
+        private BigDecimal getUnitPrice() {
+            return unitPrice;
+        }
+
+        private Image getImage() {
+            if (productImage == null || productImage.length == 0) {
+                return null;
+            }
+            return new Image(new ByteArrayInputStream(productImage));
+        }
+
+        private CreateProductCommand toCreateCommand() {
+            return new CreateProductCommand(
+                    productName,
+                    brandName,
+                    vehicleTypeName,
+                    modelCode,
+                    quantity,
+                    unitPrice,
+                    productImage,
+                    productImageType,
+                    null);
+        }
     }
 }

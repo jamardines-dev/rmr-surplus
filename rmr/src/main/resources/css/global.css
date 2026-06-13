@@ -55,7 +55,7 @@
     -fx-text-fill: #ffffff;
     -fx-font-weight: bold;
     -fx-background-radius: 6;
-    -fx-padding: 8 14;
+    -fx-padding: 8 13;
     -fx-cursor: hand;
 }
 
@@ -149,6 +149,37 @@
     -fx-spacing: 8;
 }
 
+.dialog-pane {
+    -fx-background-color: #f8fafc;
+}
+
+.dialog-pane > .content {
+    -fx-padding: 10 14 12 14;
+}
+
+.dialog-pane:header .header-panel {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #e2e8f0 transparent;
+}
+
+.dialog-pane:header .header-panel .label {
+    -fx-text-fill: #172033;
+}
+
+.modal-content {
+    -fx-background-color: #f8fafc;
+}
+
+.modal-actions {
+    -fx-alignment: center-left;
+    -fx-spacing: 8;
+}
+
+.modal-photo-row {
+    -fx-alignment: center-left;
+    -fx-spacing: 12;
+}
+
 .dashboard-button {
     -fx-min-width: 210;
     -fx-min-height: 52;
@@ -218,6 +249,48 @@
     -fx-border-radius: 8;
     -fx-background-radius: 8;
     -fx-cursor: hand;
+}
+
+.product-card-scroll,
+.product-card-scroll > .viewport {
+    -fx-background-color: #ffffff;
+}
+
+.product-card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.product-card:hover {
+    -fx-border-color: #2563eb;
+    -fx-background-color: #f8fbff;
+}
+
+.product-card-image-box {
+    -fx-min-height: 104;
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #e2e8f0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}
+
+.product-card-image {
+    -fx-cursor: hand;
+}
+
+.product-card-placeholder {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 12px;
+}
+
+.product-card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
 }
 
 .summary-card {

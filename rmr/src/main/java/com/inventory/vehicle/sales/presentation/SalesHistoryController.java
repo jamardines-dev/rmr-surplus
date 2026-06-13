@@ -65,7 +65,8 @@ public class SalesHistoryController extends SidebarController {
     @FXML
     private TableColumn<SaleTableRow, String> createdAtColumn;
 
-    public SalesHistoryController(SceneManager sceneManager, SessionService sessionService, SalesQueryService salesQueryService) {
+    public SalesHistoryController(SceneManager sceneManager, SessionService sessionService,
+            SalesQueryService salesQueryService) {
         super(sceneManager, sessionService);
         this.salesQueryService = salesQueryService;
     }
@@ -189,11 +190,11 @@ public class SalesHistoryController extends SidebarController {
         brandColumn.setCellValueFactory(new PropertyValueFactory<>("brandName"));
         brandColumn.setPrefWidth(120);
 
-        TableColumn<EmployeeSaleDetailRow, String> vehicleTypeColumn = new TableColumn<>("Vehicle Type");
+        TableColumn<EmployeeSaleDetailRow, String> vehicleTypeColumn = new TableColumn<>("Vehicle");
         vehicleTypeColumn.setCellValueFactory(new PropertyValueFactory<>("vehicleTypeName"));
         vehicleTypeColumn.setPrefWidth(130);
 
-        TableColumn<EmployeeSaleDetailRow, String> modelCodeColumn = new TableColumn<>("Model Code");
+        TableColumn<EmployeeSaleDetailRow, String> modelCodeColumn = new TableColumn<>("Model");
         modelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
         modelCodeColumn.setPrefWidth(110);
 
@@ -227,10 +228,14 @@ public class SalesHistoryController extends SidebarController {
         Button monthButton = new Button("This Month");
         Button allButton = new Button("All");
 
-        todayButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now(), LocalDate.now(), detailTable, summaryLabel));
-        weekButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now().minusDays(6), LocalDate.now(), detailTable, summaryLabel));
-        monthButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now().withDayOfMonth(1), LocalDate.now(), detailTable, summaryLabel));
-        allButton.setOnAction(event -> loadEmployeeSales(sellerName, salesQueryService.findAllSaleLinesForSeller(sellerName), detailTable, summaryLabel));
+        todayButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now(), LocalDate.now(),
+                detailTable, summaryLabel));
+        weekButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now().minusDays(6),
+                LocalDate.now(), detailTable, summaryLabel));
+        monthButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now().withDayOfMonth(1),
+                LocalDate.now(), detailTable, summaryLabel));
+        allButton.setOnAction(event -> loadEmployeeSales(sellerName,
+                salesQueryService.findAllSaleLinesForSeller(sellerName), detailTable, summaryLabel));
 
         HBox filters = new HBox(10, todayButton, weekButton, monthButton, allButton);
         VBox content = new VBox(12, filters, summaryLabel, detailTable);
@@ -271,22 +276,19 @@ public class SalesHistoryController extends SidebarController {
             LocalDate startDate,
             LocalDate endDate,
             TableView<EmployeeSaleDetailRow> detailTable,
-            Label summaryLabel
-    ) {
+            Label summaryLabel) {
         loadEmployeeSales(
                 sellerName,
                 salesQueryService.findSaleLinesForSellerBetween(sellerName, startDate, endDate),
                 detailTable,
-                summaryLabel
-        );
+                summaryLabel);
     }
 
     private void loadEmployeeSales(
             String sellerName,
             List<SaleLineResult> saleLines,
             TableView<EmployeeSaleDetailRow> detailTable,
-            Label summaryLabel
-    ) {
+            Label summaryLabel) {
         detailTable.setItems(FXCollections.observableArrayList(saleLines.stream()
                 .map(EmployeeSaleDetailRow::new)
                 .toList()));

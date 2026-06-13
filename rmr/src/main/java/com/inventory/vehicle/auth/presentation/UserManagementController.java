@@ -6,6 +6,8 @@ import com.inventory.vehicle.auth.domain.Role;
 import com.inventory.vehicle.common.exception.BusinessException;
 import com.inventory.vehicle.navigation.SceneManager;
 import com.inventory.vehicle.navigation.SidebarController;
+import java.time.LocalDate;
+import java.util.List;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Controller;
 public class UserManagementController extends SidebarController {
 
     private final UserManagementService userManagementService;
+    private List<LoginHistoryTableRow> allLoginHistory = List.of();
 
     @FXML
     private TableView<UserAccountTableRow> usersTable;
@@ -71,6 +74,7 @@ public class UserManagementController extends SidebarController {
 
     @FXML
     private Label messageLabel;
+    private String loginHistoryFilter = "ALL";
 
     public UserManagementController(
             SceneManager sceneManager,
@@ -113,11 +117,42 @@ public class UserManagementController extends SidebarController {
                 .stream()
                 .map(UserAccountTableRow::new)
                 .toList());
-        loginHistoryTable.getItems().setAll(userManagementService.loginHistory()
+        allLoginHistory = userManagementService.loginHistory()
                 .stream()
                 .map(LoginHistoryTableRow::new)
-                .toList());
+                .toList();
+        applyLoginHistoryFilter();
         messageLabel.setText("");
+    }
+
+    @FXML
+    private void showAllLoginHistory() {
+        loginHistoryFilter = "ALL";
+        applyLoginHistoryFilter();
+    }
+
+    @FXML
+    private void showWeeklyLoginHistory() {
+        loginHistoryFilter = "WEEK";
+        applyLoginHistoryFilter();
+    }
+
+    @FXML
+    private void showMonthlyLoginHistory() {
+        loginHistoryFilter = "MONTH";
+        applyLoginHistoryFilter();
+    }
+
+    private void applyLoginHistoryFilter() {
+        LocalDate today = LocalDate.now();
+        loginHistoryTable.getItems().setAll(allLoginHistory.stream()
+                .filter(row -> switch (loginHistoryFilter) {
+                    case "WEEK" -> !row.getLoggedInAt().toLocalDate().isBefore(today.minusDays(6));
+                    case "MONTH" -> row.getLoggedInAt().getYear() == today.getYear()
+                            && row.getLoggedInAt().getMonth() == today.getMonth();
+                    default -> true;
+                })
+                .toList());
     }
 
     @FXML

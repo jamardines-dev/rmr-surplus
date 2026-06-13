@@ -160,8 +160,8 @@ public class EmployeeSalesController extends SidebarController {
         details.setHgap(24);
         details.setVgap(12);
         addDetailRow(details, 0, 0, "Brand", sale.getBrandName());
-        addDetailRow(details, 1, 0, "Vehicle Type", sale.getVehicleTypeName());
-        addDetailRow(details, 0, 1, "Model Code", sale.getModelCode());
+        addDetailRow(details, 1, 0, "Vehicle", sale.getVehicleTypeName());
+        addDetailRow(details, 0, 1, "Model", sale.getModelCode());
         addDetailRow(details, 1, 1, "Time", sale.getTime());
         addDetailRow(details, 0, 2, "Quantity", String.valueOf(sale.getQuantitySold()));
         addDetailRow(details, 1, 2, "Price", MoneyFormat.peso(sale.getPriceSold()));

@@ -1,6 +1,7 @@
 package com.inventory.vehicle.auth.presentation;
 
 import com.inventory.vehicle.auth.application.LoginHistoryResult;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class LoginHistoryTableRow {
@@ -12,10 +13,12 @@ public class LoginHistoryTableRow {
     private final String role;
     private final String loginDate;
     private final String loginTime;
+    private final LocalDateTime loggedInAt;
 
     public LoginHistoryTableRow(LoginHistoryResult loginHistory) {
         this.username = loginHistory.username();
         this.role = loginHistory.role();
+        this.loggedInAt = loginHistory.loggedInAt();
         this.loginDate = loginHistory.loggedInAt().format(DATE_FORMATTER);
         this.loginTime = loginHistory.loggedInAt().format(TIME_FORMATTER);
     }
@@ -34,5 +37,9 @@ public class LoginHistoryTableRow {
 
     public String getLoginTime() {
         return loginTime;
+    }
+
+    public LocalDateTime getLoggedInAt() {
+        return loggedInAt;
     }
 }

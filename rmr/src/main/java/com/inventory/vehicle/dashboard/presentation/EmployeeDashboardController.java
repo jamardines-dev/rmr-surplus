@@ -12,15 +12,15 @@ import com.inventory.vehicle.sales.application.RecordCartSaleCommand;
 import com.inventory.vehicle.sales.application.RecordSaleService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -31,13 +31,14 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import org.springframework.stereotype.Controller;
 
 @Controller
 public class EmployeeDashboardController extends SidebarController {
-
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("h:mm a");
 
     private final ProductQueryService productQueryService;
     private final RecordSaleService recordSaleService;
@@ -48,55 +49,10 @@ public class EmployeeDashboardController extends SidebarController {
     private TextField searchField;
 
     @FXML
-    private TableView<ProductTableRow> productTable;
+    private TilePane productCardPane;
 
     @FXML
-    private TableColumn<ProductTableRow, String> productNameColumn;
-
-    @FXML
-    private TableColumn<ProductTableRow, String> brandColumn;
-
-    @FXML
-    private TableColumn<ProductTableRow, String> vehicleTypeColumn;
-
-    @FXML
-    private TableColumn<ProductTableRow, String> modelCodeColumn;
-
-    @FXML
-    private TableColumn<ProductTableRow, Integer> stockColumn;
-
-    @FXML
-    private TableColumn<ProductTableRow, BigDecimal> priceColumn;
-
-    @FXML
-    private Label selectedProductLabel;
-
-    @FXML
-    private Label selectedDetailsLabel;
-
-    @FXML
-    private ImageView selectedProductImageView;
-
-    @FXML
-    private TextField quantityField;
-
-    @FXML
-    private TextField priceField;
-
-    @FXML
-    private Label employeeNameLabel;
-
-    @FXML
-    private Label dateLabel;
-
-    @FXML
-    private Label timeLabel;
-
-    @FXML
-    private Label totalAmountLabel;
-
-    @FXML
-    private ComboBox<String> receiptTypeComboBox;
+    private TextField cartQuantityField;
 
     @FXML
     private TableView<EmployeeCartItemRow> cartTable;
@@ -126,8 +82,7 @@ public class EmployeeDashboardController extends SidebarController {
             SceneManager sceneManager,
             SessionService sessionService,
             ProductQueryService productQueryService,
-            RecordSaleService recordSaleService
-    ) {
+            RecordSaleService recordSaleService) {
         super(sceneManager, sessionService);
         this.productQueryService = productQueryService;
         this.recordSaleService = recordSaleService;
@@ -135,15 +90,6 @@ public class EmployeeDashboardController extends SidebarController {
 
     @FXML
     private void initialize() {
-        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
-        brandColumn.setCellValueFactory(new PropertyValueFactory<>("brandName"));
-        vehicleTypeColumn.setCellValueFactory(new PropertyValueFactory<>("vehicleTypeName"));
-        modelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
-        stockColumn.setCellValueFactory(new PropertyValueFactory<>("currentStock"));
-        priceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
-        priceColumn.setCellFactory(column -> moneyCell());
-        productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-
         cartProductColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
         cartModelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
         cartQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
@@ -152,78 +98,35 @@ public class EmployeeDashboardController extends SidebarController {
         cartPriceColumn.setCellFactory(column -> moneyCell());
         cartTotalColumn.setCellFactory(column -> moneyCell());
         cartTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-
-        productTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, selectedProduct) -> {
-            if (selectedProduct != null) {
-                showSelectedProduct(selectedProduct);
+        cartTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, selectedItem) -> {
+            if (selectedItem == null) {
+                cartQuantityField.clear();
+            } else {
+                cartQuantityField.setText(String.valueOf(selectedItem.getQuantity()));
             }
         });
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> applySearch());
-        quantityField.textProperty().addListener((observable, oldValue, newValue) -> updateSalePreview());
-        priceField.setEditable(false);
-        priceField.setFocusTraversable(false);
-        selectedProductImageView.setPickOnBounds(true);
-        receiptTypeComboBox.getItems().setAll("Delivery Receipt", "Official Receipt");
-        receiptTypeComboBox.getSelectionModel().selectFirst();
 
-        employeeNameLabel.setText(sessionService.getCurrentDisplayName());
-        dateLabel.setText(LocalDate.now().toString());
-        timeLabel.setText(LocalTime.now().format(TIME_FORMATTER));
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> applySearch());
+
         refreshProducts();
         refreshCart();
-        updateSalePreview();
     }
 
     @FXML
     private void searchProduct() {
-        applySearch();
-        if (productTable.getItems().isEmpty()) {
+        List<ProductTableRow> products = filterProducts();
+        renderProductCards(products);
+        if (products.isEmpty()) {
             messageLabel.setText("No matching product found.");
             return;
         }
-        productTable.getSelectionModel().selectFirst();
-        productTable.scrollTo(0);
-        messageLabel.setText("Product selected.");
+        messageLabel.setText("Showing " + products.size() + " matching product(s).");
     }
 
     @FXML
     private void clearSearch() {
         searchField.clear();
         applySearch();
-    }
-
-    @FXML
-    private void addToCart() {
-        ProductTableRow selectedProduct = productTable.getSelectionModel().getSelectedItem();
-        if (selectedProduct == null) {
-            messageLabel.setText("Select a product first.");
-            return;
-        }
-
-        try {
-            int quantity = parseQuantity();
-            BigDecimal price = parsePrice();
-            EmployeeCartItemRow existingItem = findCartItem(selectedProduct.getId());
-            int existingQuantity = existingItem == null ? 0 : existingItem.getQuantity();
-            int totalRequestedQuantity = existingQuantity + quantity;
-            if (totalRequestedQuantity > selectedProduct.getCurrentStock()) {
-                messageLabel.setText("Insufficient stock. Available stock: " + selectedProduct.getCurrentStock() + ".");
-                return;
-            }
-
-            if (existingItem == null) {
-                cartItems.add(new EmployeeCartItemRow(selectedProduct, quantity, price));
-                messageLabel.setText("Added to cart.");
-            } else {
-                existingItem.addQuantity(quantity);
-                messageLabel.setText("Cart quantity updated.");
-            }
-            quantityField.setText("1");
-            priceField.setText(selectedProduct.getUnitPrice().toPlainString());
-            refreshCart();
-        } catch (NumberFormatException exception) {
-            messageLabel.setText(exception.getMessage());
-        }
     }
 
     @FXML
@@ -236,7 +139,33 @@ public class EmployeeDashboardController extends SidebarController {
 
         cartItems.remove(selectedItem);
         refreshCart();
+        cartQuantityField.clear();
         messageLabel.setText("Removed from cart.");
+    }
+
+    @FXML
+    private void updateCartItemQuantity() {
+        EmployeeCartItemRow selectedItem = cartTable.getSelectionModel().getSelectedItem();
+        if (selectedItem == null) {
+            messageLabel.setText("Select a cart item to update.");
+            return;
+        }
+
+        try {
+            int quantity = parseCardQuantity(cartQuantityField.getText());
+            ProductTableRow product = findProduct(selectedItem.getProductId());
+            if (product != null && quantity > product.getCurrentStock()) {
+                messageLabel.setText("Insufficient stock. Available stock: " + product.getCurrentStock() + ".");
+                return;
+            }
+            selectedItem.setQuantity(quantity);
+            refreshCart();
+            cartTable.getSelectionModel().select(selectedItem);
+            cartQuantityField.setText(String.valueOf(quantity));
+            messageLabel.setText(selectedItem.getProductName() + " quantity updated.");
+        } catch (NumberFormatException exception) {
+            messageLabel.setText(exception.getMessage());
+        }
     }
 
     @FXML
@@ -261,11 +190,11 @@ public class EmployeeDashboardController extends SidebarController {
             Long saleId = recordSaleService.recordCartSale(new RecordCartSaleCommand(
                     sessionService.getCurrentDisplayName(),
                     LocalDate.now(),
-                    receiptTypeComboBox.getValue(),
+                    "Delivery Receipt",
                     cartItems.stream()
-                            .map(item -> new CartSaleItemCommand(item.getProductId(), item.getQuantity(), item.getPriceSold()))
-                            .toList()
-            ));
+                            .map(item -> new CartSaleItemCommand(item.getProductId(), item.getQuantity(),
+                                    item.getPriceSold()))
+                            .toList()));
             cartItems.clear();
             refreshCart();
             refreshProducts();
@@ -301,47 +230,205 @@ public class EmployeeDashboardController extends SidebarController {
                 .orElse(null);
     }
 
+    private ProductTableRow findProduct(Long productId) {
+        return allProducts.stream()
+                .filter(product -> product.getId().equals(productId))
+                .findFirst()
+                .orElse(null);
+    }
+
     private void applySearch() {
+        renderProductCards(filterProducts());
+    }
+
+    private List<ProductTableRow> filterProducts() {
         String searchText = searchField.getText();
         if (searchText == null || searchText.isBlank()) {
-            productTable.getItems().setAll(allProducts);
-            return;
+            return allProducts;
         }
 
         String normalizedSearch = searchText.trim().toLowerCase();
-        productTable.getItems().setAll(allProducts.stream()
+        return allProducts.stream()
                 .filter(product -> contains(product.getProductName(), normalizedSearch)
                         || contains(product.getBrandName(), normalizedSearch)
                         || contains(product.getVehicleTypeName(), normalizedSearch)
                         || contains(product.getModelCode(), normalizedSearch))
+                .toList();
+    }
+
+    private void renderProductCards(List<ProductTableRow> products) {
+        productCardPane.getChildren().setAll(products.stream()
+                .map(this::createProductCard)
                 .toList());
+    }
+
+    private VBox createProductCard(ProductTableRow product) {
+        ImageView productImage = new ImageView(product.getImage());
+        productImage.setFitHeight(96);
+        productImage.setFitWidth(140);
+        productImage.setPreserveRatio(true);
+        productImage.setPickOnBounds(true);
+        productImage.getStyleClass().add("product-card-image");
+        productImage.setOnMouseClicked(event -> {
+            openProductDetails(product);
+            event.consume();
+        });
+
+        Label photoPlaceholder = new Label(product.getImage() == null ? "No Photo" : "");
+        photoPlaceholder.getStyleClass().add("product-card-placeholder");
+
+        VBox imageBox = new VBox(productImage, photoPlaceholder);
+        imageBox.setAlignment(Pos.CENTER);
+        imageBox.getStyleClass().add("product-card-image-box");
+
+        Label nameLabel = new Label(product.getProductName());
+        nameLabel.setWrapText(true);
+        nameLabel.getStyleClass().add("product-card-title");
+
+        Label metaLabel = new Label(product.getBrandName() + " | " + product.getModelCode());
+        metaLabel.setWrapText(true);
+        metaLabel.getStyleClass().add("subtitle");
+
+        Label stockLabel = new Label("Stock: " + product.getCurrentStock());
+        stockLabel.getStyleClass().add("field-label");
+
+        Label priceLabel = new Label(MoneyFormat.peso(product.getUnitPrice()));
+        priceLabel.getStyleClass().add("summary-value-small");
+
+        TextField quantityField = new TextField("1");
+        quantityField.setPromptText("Qty");
+        quantityField.setMaxWidth(72);
+        quantityField.setOnMouseClicked(event -> event.consume());
+
+        Button addButton = new Button("Add to Cart");
+        addButton.setMaxWidth(Double.MAX_VALUE);
+        addButton.setOnMouseClicked(event -> event.consume());
+        addButton.setOnAction(event -> {
+            try {
+                addProductToCart(product, quantityField.getText());
+                quantityField.setText("1");
+            } catch (NumberFormatException exception) {
+                messageLabel.setText(exception.getMessage());
+            }
+            event.consume();
+        });
+
+        HBox cartControls = new HBox(8, quantityField, addButton);
+        cartControls.setAlignment(Pos.CENTER_LEFT);
+        cartControls.setOnMouseClicked(event -> event.consume());
+
+        VBox card = new VBox(8, imageBox, nameLabel, metaLabel, new HBox(10, stockLabel, priceLabel), cartControls);
+        card.setPadding(new Insets(12));
+        card.setPrefWidth(210);
+        card.setMinHeight(260);
+        card.getStyleClass().add("product-card");
+        card.setOnMouseClicked(event -> openProductDetails(product));
+        return card;
+    }
+
+    private void addProductToCart(ProductTableRow product, String quantityText) {
+        int quantity = parseCardQuantity(quantityText);
+        EmployeeCartItemRow existingItem = findCartItem(product.getId());
+        int existingQuantity = existingItem == null ? 0 : existingItem.getQuantity();
+        int totalRequestedQuantity = existingQuantity + quantity;
+        if (totalRequestedQuantity > product.getCurrentStock()) {
+            messageLabel.setText("Insufficient stock. Available stock: " + product.getCurrentStock() + ".");
+            return;
+        }
+
+        if (existingItem == null) {
+            cartItems.add(new EmployeeCartItemRow(product, quantity, product.getUnitPrice()));
+            messageLabel.setText(product.getProductName() + " added to cart.");
+        } else {
+            existingItem.addQuantity(quantity);
+            messageLabel.setText(product.getProductName() + " quantity updated.");
+        }
+        refreshCart();
+    }
+
+    private int parseCardQuantity(String quantityText) {
+        if (quantityText == null || quantityText.isBlank()) {
+            throw new NumberFormatException("Quantity is required.");
+        }
+        try {
+            int quantity = Integer.parseInt(quantityText.trim());
+            if (quantity <= 0) {
+                throw new NumberFormatException("Quantity must be greater than zero.");
+            }
+            return quantity;
+        } catch (NumberFormatException exception) {
+            if (exception.getMessage() != null && exception.getMessage().startsWith("Quantity")) {
+                throw exception;
+            }
+            throw new NumberFormatException("Quantity must be a whole number.");
+        }
     }
 
     private boolean contains(String value, String searchText) {
         return value != null && value.toLowerCase().contains(searchText);
     }
 
-    private void showSelectedProduct(ProductTableRow product) {
-        selectedProductLabel.setText(product.getProductName());
-        selectedDetailsLabel.setText(product.getBrandName()
-                + " | " + product.getVehicleTypeName()
-                + " | " + product.getModelCode()
-                + " | Stock: " + product.getCurrentStock()
-                + " | Default price: " + MoneyFormat.peso(product.getUnitPrice()));
-        selectedProductImageView.setImage(product.getImage());
-        quantityField.setText("1");
-        priceField.setText(product.getUnitPrice().toPlainString());
-        updateSalePreview();
+    private void openProductDetails(ProductTableRow product) {
+        Image image = product.getImage();
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(240);
+        imageView.setFitHeight(180);
+        imageView.setPreserveRatio(true);
+        imageView.setPickOnBounds(true);
+        imageView.getStyleClass().add("product-image-preview");
+        imageView.setOnMouseClicked(event -> {
+            openProductImage(product);
+            event.consume();
+        });
+
+        Label noPhotoLabel = new Label(image == null ? "No Photo" : "Click photo to enlarge");
+        noPhotoLabel.getStyleClass().add("subtitle");
+
+        VBox photoBox = new VBox(8, imageView, noPhotoLabel);
+        photoBox.setAlignment(Pos.CENTER);
+        photoBox.getStyleClass().add("product-card-image-box");
+
+        GridPane details = new GridPane();
+        details.setHgap(18);
+        details.setVgap(10);
+        addDetail(details, 0, 0, "Product", product.getProductName());
+        addDetail(details, 1, 0, "Brand", product.getBrandName());
+        addDetail(details, 0, 1, "Type", product.getVehicleTypeName());
+        addDetail(details, 1, 1, "Model", product.getModelCode());
+        addDetail(details, 0, 2, "Stock", String.valueOf(product.getCurrentStock()));
+        addDetail(details, 1, 2, "Default Price", MoneyFormat.peso(product.getUnitPrice()));
+
+        VBox content = new VBox(14, photoBox, details);
+        content.setPrefWidth(560);
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Product Details");
+        dialog.setHeaderText(product.getProductName());
+        dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.getDialogPane().setContent(content);
+        dialog.showAndWait();
     }
 
-    @FXML
-    private void openSelectedProductImage() {
-        Image image = selectedProductImageView.getImage();
+    private void addDetail(GridPane details, int column, int row, String label, String value) {
+        VBox field = new VBox(3);
+        Label labelNode = new Label(label);
+        labelNode.getStyleClass().add("field-label");
+        Label valueNode = new Label(value == null || value.isBlank() ? "-" : value);
+        valueNode.setWrapText(true);
+        field.getChildren().addAll(labelNode, valueNode);
+        details.add(field, column, row);
+    }
+
+    private void openProductImage(ProductTableRow product) {
+        Image image = product.getImage();
         if (image == null) {
             messageLabel.setText("No product photo available.");
             return;
         }
+        openProductImage(product.getProductName(), image);
+    }
 
+    private void openProductImage(String title, Image image) {
         ImageView imageView = new ImageView(image);
         imageView.setPreserveRatio(true);
         imageView.setFitWidth(760);
@@ -352,27 +439,15 @@ public class EmployeeDashboardController extends SidebarController {
         imageScroll.setFitToHeight(true);
         imageScroll.setPannable(true);
 
-        VBox content = new VBox(12, new Label(selectedProductLabel.getText()), imageScroll);
+        VBox content = new VBox(12, new Label(title), imageScroll);
         content.setPrefSize(820, 600);
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Product Photo");
-        dialog.setHeaderText(selectedProductLabel.getText());
+        dialog.setHeaderText(title);
         dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
         dialog.getDialogPane().setContent(content);
         dialog.showAndWait();
-    }
-
-    private void updateSalePreview() {
-        employeeNameLabel.setText(sessionService.getCurrentDisplayName());
-        dateLabel.setText(LocalDate.now().toString());
-        timeLabel.setText(LocalTime.now().format(TIME_FORMATTER));
-        try {
-            BigDecimal total = parsePrice().multiply(BigDecimal.valueOf(parseQuantity()));
-            totalAmountLabel.setText(MoneyFormat.peso(total));
-        } catch (NumberFormatException exception) {
-            totalAmountLabel.setText(MoneyFormat.peso(BigDecimal.ZERO));
-        }
     }
 
     private <S> TableCell<S, BigDecimal> moneyCell() {
@@ -395,39 +470,4 @@ public class EmployeeDashboardController extends SidebarController {
                 .isPresent();
     }
 
-    private int parseQuantity() {
-        if (quantityField.getText() == null || quantityField.getText().isBlank()) {
-            throw new NumberFormatException("Quantity is required.");
-        }
-        try {
-            int quantity = Integer.parseInt(quantityField.getText().trim());
-            if (quantity <= 0) {
-                throw new NumberFormatException("Quantity must be greater than zero.");
-            }
-            return quantity;
-        } catch (NumberFormatException exception) {
-            if (exception.getMessage() != null && exception.getMessage().startsWith("Quantity")) {
-                throw exception;
-            }
-            throw new NumberFormatException("Quantity must be a whole number.");
-        }
-    }
-
-    private BigDecimal parsePrice() {
-        if (priceField.getText() == null || priceField.getText().isBlank()) {
-            throw new NumberFormatException("Price is required.");
-        }
-        try {
-            BigDecimal price = new BigDecimal(priceField.getText().trim());
-            if (price.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new NumberFormatException("Price must be greater than zero.");
-            }
-            return price;
-        } catch (NumberFormatException exception) {
-            if (exception.getMessage() != null && exception.getMessage().startsWith("Price")) {
-                throw exception;
-            }
-            throw new NumberFormatException("Price must be a valid number.");
-        }
-    }
 }
