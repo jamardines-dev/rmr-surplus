@@ -11,9 +11,9 @@ import java.time.LocalDate;
 import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TableColumn;
@@ -37,6 +37,9 @@ public class SalesHistoryController extends SidebarController {
 
     @FXML
     private DatePicker soldDatePicker;
+
+    @FXML
+    private ComboBox<String> salesFilterComboBox;
 
     @FXML
     private TextField searchField;
@@ -92,7 +95,29 @@ public class SalesHistoryController extends SidebarController {
             return row;
         });
         searchField.textProperty().addListener((observable, oldValue, newValue) -> applySearch());
-        loadAllSales();
+        salesFilterComboBox.getItems().setAll("All", "Today", "Week", "Month", "Date");
+        salesFilterComboBox.setValue("All");
+        salesFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> applySalesFilter());
+        soldDatePicker.setOnAction(event -> {
+            salesFilterComboBox.setValue("Date");
+            applySalesFilter();
+        });
+        applySalesFilter();
+    }
+
+    private void applySalesFilter() {
+        String filter = salesFilterComboBox.getValue();
+        if ("Today".equals(filter)) {
+            loadTodaySales();
+        } else if ("Week".equals(filter)) {
+            loadWeeklySales();
+        } else if ("Month".equals(filter)) {
+            loadMonthlySales();
+        } else if ("Date".equals(filter)) {
+            loadSalesByDate();
+        } else {
+            loadAllSales();
+        }
     }
 
     @FXML
@@ -223,26 +248,35 @@ public class SalesHistoryController extends SidebarController {
         detailTable.getColumns().add(priceColumn);
         detailTable.getColumns().add(totalColumn);
 
-        Button todayButton = new Button("Today");
-        Button weekButton = new Button("Past 7 Days");
-        Button monthButton = new Button("This Month");
-        Button allButton = new Button("All");
+        ComboBox<String> employeeFilterComboBox = new ComboBox<>();
+        employeeFilterComboBox.getItems().setAll("Today", "Week", "Month", "All");
+        employeeFilterComboBox.setValue("Today");
+        employeeFilterComboBox.setPrefWidth(150);
+        employeeFilterComboBox.valueProperty().addListener((observable, oldValue, filter) ->
+                applyEmployeeSalesFilter(filter, sellerName, detailTable, summaryLabel));
 
-        todayButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now(), LocalDate.now(),
-                detailTable, summaryLabel));
-        weekButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now().minusDays(6),
-                LocalDate.now(), detailTable, summaryLabel));
-        monthButton.setOnAction(event -> loadEmployeeSalesForDateRange(sellerName, LocalDate.now().withDayOfMonth(1),
-                LocalDate.now(), detailTable, summaryLabel));
-        allButton.setOnAction(event -> loadEmployeeSales(sellerName,
-                salesQueryService.findAllSaleLinesForSeller(sellerName), detailTable, summaryLabel));
-
-        HBox filters = new HBox(10, todayButton, weekButton, monthButton, allButton);
+        HBox filters = new HBox(10, new Label("Filter"), employeeFilterComboBox);
         VBox content = new VBox(12, filters, summaryLabel, detailTable);
         dialog.getDialogPane().setContent(content);
 
-        loadEmployeeSalesForDateRange(sellerName, LocalDate.now(), LocalDate.now(), detailTable, summaryLabel);
+        applyEmployeeSalesFilter("Today", sellerName, detailTable, summaryLabel);
         dialog.showAndWait();
+    }
+
+    private void applyEmployeeSalesFilter(
+            String filter,
+            String sellerName,
+            TableView<EmployeeSaleDetailRow> detailTable,
+            Label summaryLabel) {
+        if ("Week".equals(filter)) {
+            loadEmployeeSalesForDateRange(sellerName, LocalDate.now().minusDays(6), LocalDate.now(), detailTable, summaryLabel);
+        } else if ("Month".equals(filter)) {
+            loadEmployeeSalesForDateRange(sellerName, LocalDate.now().withDayOfMonth(1), LocalDate.now(), detailTable, summaryLabel);
+        } else if ("All".equals(filter)) {
+            loadEmployeeSales(sellerName, salesQueryService.findAllSaleLinesForSeller(sellerName), detailTable, summaryLabel);
+        } else {
+            loadEmployeeSalesForDateRange(sellerName, LocalDate.now(), LocalDate.now(), detailTable, summaryLabel);
+        }
     }
 
     private void setSales(List<SaleTableRow> sales) {

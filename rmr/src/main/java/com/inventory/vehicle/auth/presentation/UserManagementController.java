@@ -73,6 +73,9 @@ public class UserManagementController extends SidebarController {
     private TableColumn<LoginHistoryTableRow, String> loginTimeColumn;
 
     @FXML
+    private ComboBox<String> loginHistoryFilterComboBox;
+
+    @FXML
     private Label messageLabel;
     private String loginHistoryFilter = "ALL";
 
@@ -99,6 +102,12 @@ public class UserManagementController extends SidebarController {
         loginDateColumn.setCellValueFactory(new PropertyValueFactory<>("loginDate"));
         loginTimeColumn.setCellValueFactory(new PropertyValueFactory<>("loginTime"));
         loginHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        loginHistoryFilterComboBox.getItems().setAll("All", "Today", "Week", "Month");
+        loginHistoryFilterComboBox.setValue("All");
+        loginHistoryFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            loginHistoryFilter = newValue == null ? "ALL" : newValue.toUpperCase();
+            applyLoginHistoryFilter();
+        });
 
         roleComboBox.getItems().setAll(Role.ADMIN, Role.EMPLOYEE);
         activeCheckBox.setSelected(true);
@@ -125,28 +134,11 @@ public class UserManagementController extends SidebarController {
         messageLabel.setText("");
     }
 
-    @FXML
-    private void showAllLoginHistory() {
-        loginHistoryFilter = "ALL";
-        applyLoginHistoryFilter();
-    }
-
-    @FXML
-    private void showWeeklyLoginHistory() {
-        loginHistoryFilter = "WEEK";
-        applyLoginHistoryFilter();
-    }
-
-    @FXML
-    private void showMonthlyLoginHistory() {
-        loginHistoryFilter = "MONTH";
-        applyLoginHistoryFilter();
-    }
-
     private void applyLoginHistoryFilter() {
         LocalDate today = LocalDate.now();
         loginHistoryTable.getItems().setAll(allLoginHistory.stream()
                 .filter(row -> switch (loginHistoryFilter) {
+                    case "TODAY" -> row.getLoggedInAt().toLocalDate().isEqual(today);
                     case "WEEK" -> !row.getLoggedInAt().toLocalDate().isBefore(today.minusDays(6));
                     case "MONTH" -> row.getLoggedInAt().getYear() == today.getYear()
                             && row.getLoggedInAt().getMonth() == today.getMonth();

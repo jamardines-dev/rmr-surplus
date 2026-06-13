@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
@@ -31,12 +31,8 @@
             </VBox>
             <HBox spacing="10" styleClass="toolbar">
                 <TextField fx:id="searchField" onAction="#searchSales" prefWidth="280" promptText="Search seller, receipt, or transaction ID"/>
+                <ComboBox fx:id="salesFilterComboBox" prefWidth="150"/>
                 <DatePicker fx:id="soldDatePicker" prefWidth="180"/>
-                <Button onAction="#loadTodaySales" text="Today"/>
-                <Button onAction="#loadWeeklySales" text="Weekly"/>
-                <Button onAction="#loadMonthlySales" text="Monthly"/>
-                <Button onAction="#loadSalesByDate" text="Filter Date"/>
-                <Button onAction="#loadAllSales" styleClass="secondary" text="All"/>
             </HBox>
             <TableView fx:id="salesTable" VBox.vgrow="ALWAYS">
                 <columns>

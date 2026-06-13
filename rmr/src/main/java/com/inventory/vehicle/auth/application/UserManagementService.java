@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserManagementService {
 
     private static final String LOGIN_ACTION = "LOGIN_SUCCESS";
+    private static final String MAIN_ADMIN_USERNAME = "rmr";
 
     private final UserRepository userRepository;
     private final AuditLogRepository auditLogRepository;
@@ -155,6 +156,9 @@ public class UserManagementService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException("Account was not found."));
+        if (MAIN_ADMIN_USERNAME.equalsIgnoreCase(user.getUsername())) {
+            throw new BusinessException("The main admin account rmr cannot be deleted.");
+        }
         if (user.getId().equals(sessionService.getCurrentUserId())) {
             throw new BusinessException("You cannot delete your own account.");
         }

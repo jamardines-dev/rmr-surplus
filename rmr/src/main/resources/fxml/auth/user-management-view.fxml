@@ -51,7 +51,7 @@
                     <padding>
                         <Insets bottom="18" left="18" right="18" top="18"/>
                     </padding>
-                    <Label text="Create or Edit Account" styleClass="section-title"/>
+                    <Label text="Create or Change Credentials" styleClass="section-title"/>
 
                     <VBox spacing="6">
                         <Label text="Username" styleClass="field-label"/>
@@ -72,7 +72,7 @@
                         <Label text="Password" styleClass="field-label"/>
                         <PasswordField fx:id="newPasswordField"
                                        maxWidth="Infinity"
-                                       promptText="Required for create, blank keeps old"/>
+                                       promptText="New password, blank keeps old"/>
                     </VBox>
 
                     <HBox spacing="10">
@@ -80,7 +80,6 @@
                         <Button maxWidth="Infinity" onAction="#saveAccount" text="Save Changes" HBox.hgrow="ALWAYS"/>
                     </HBox>
                     <HBox spacing="10">
-                        <Button maxWidth="Infinity" onAction="#clearForm" styleClass="secondary" text="Clear Form" HBox.hgrow="ALWAYS"/>
                         <Button maxWidth="Infinity" onAction="#deleteAccount" styleClass="danger" text="Delete Account" HBox.hgrow="ALWAYS"/>
                     </HBox>
                     <Label fx:id="messageLabel" wrapText="true" styleClass="message"/>
@@ -90,10 +89,7 @@
             <VBox spacing="12" VBox.vgrow="ALWAYS">
                 <HBox spacing="10" styleClass="toolbar">
                     <Label text="Login History" styleClass="section-title"/>
-                    <Button onAction="#showAllLoginHistory" styleClass="secondary" text="All"/>
-                    <Button onAction="#showWeeklyLoginHistory" styleClass="secondary" text="Week"/>
-                    <Button onAction="#showMonthlyLoginHistory" styleClass="secondary" text="Month"/>
-                    <Button onAction="#refresh" styleClass="secondary" text="Refresh"/>
+                    <ComboBox fx:id="loginHistoryFilterComboBox" prefWidth="150"/>
                 </HBox>
                 <TableView fx:id="loginHistoryTable" VBox.vgrow="ALWAYS">
                     <columns>

@@ -38,7 +38,6 @@
                            HBox.hgrow="ALWAYS"/>
                 <HBox spacing="8">
                     <Button onAction="#searchProduct" text="Search"/>
-                    <Button onAction="#clearSearch" styleClass="secondary" text="Clear"/>
                     <Button onAction="#updateProduct" styleClass="secondary" text="Edit"/>
                     <Button onAction="#openRestockModal" text="Restock"/>
                     <Button onAction="#deleteProduct" styleClass="danger" text="Delete"/>
