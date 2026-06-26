@@ -2,6 +2,7 @@ package com.inventory.vehicle.product.application;
 
 public record RestockProductItemCommand(
         Long productId,
-        int quantity
+        int quantity,
+        String drNumber
 ) {
 }

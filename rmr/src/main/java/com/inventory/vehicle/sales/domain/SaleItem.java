@@ -32,6 +32,9 @@ public class SaleItem {
     private int quantitySold;
 
     @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal originalPrice;
+
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal priceSold;
 
     @Column(nullable = false, precision = 12, scale = 2)
@@ -63,6 +66,14 @@ public class SaleItem {
 
     public void setQuantitySold(int quantitySold) {
         this.quantitySold = quantitySold;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(BigDecimal originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public BigDecimal getPriceSold() {

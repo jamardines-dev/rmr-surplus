@@ -12,9 +12,11 @@ public record SaleLineResult(
         String brandName,
         String vehicleTypeName,
         String modelCode,
+        String stockNumber,
         byte[] productImage,
         String productImageType,
         int quantitySold,
+        BigDecimal originalPrice,
         BigDecimal priceSold,
         BigDecimal totalAmount
 ) {

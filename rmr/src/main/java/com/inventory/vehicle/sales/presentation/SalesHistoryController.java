@@ -60,9 +60,6 @@ public class SalesHistoryController extends SidebarController {
     private TableColumn<SaleTableRow, BigDecimal> totalColumn;
 
     @FXML
-    private TableColumn<SaleTableRow, String> receiptTypeColumn;
-
-    @FXML
     private TableColumn<SaleTableRow, String> encodedByColumn;
 
     @FXML
@@ -81,7 +78,6 @@ public class SalesHistoryController extends SidebarController {
         soldDateColumn.setCellValueFactory(new PropertyValueFactory<>("soldDate"));
         totalColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         totalColumn.setCellFactory(column -> moneyCell());
-        receiptTypeColumn.setCellValueFactory(new PropertyValueFactory<>("receiptTypeText"));
         encodedByColumn.setCellValueFactory(new PropertyValueFactory<>("encodedBy"));
         createdAtColumn.setCellValueFactory(new PropertyValueFactory<>("createdAtText"));
         salesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -223,18 +219,27 @@ public class SalesHistoryController extends SidebarController {
         modelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
         modelCodeColumn.setPrefWidth(110);
 
+        TableColumn<EmployeeSaleDetailRow, String> stockNumberColumn = new TableColumn<>("Stock#");
+        stockNumberColumn.setCellValueFactory(new PropertyValueFactory<>("stockNumber"));
+        stockNumberColumn.setPrefWidth(85);
+
         TableColumn<EmployeeSaleDetailRow, Integer> quantityColumn = new TableColumn<>("Qty");
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantitySold"));
-        quantityColumn.setPrefWidth(70);
+        quantityColumn.setPrefWidth(50);
 
-        TableColumn<EmployeeSaleDetailRow, BigDecimal> priceColumn = new TableColumn<>("Price");
+        TableColumn<EmployeeSaleDetailRow, BigDecimal> defaultPriceColumn = new TableColumn<>("Default Price");
+        defaultPriceColumn.setCellValueFactory(new PropertyValueFactory<>("originalPrice"));
+        defaultPriceColumn.setPrefWidth(100);
+        defaultPriceColumn.setCellFactory(column -> moneyCell());
+
+        TableColumn<EmployeeSaleDetailRow, BigDecimal> priceColumn = new TableColumn<>("Sold Price");
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("priceSold"));
-        priceColumn.setPrefWidth(100);
+        priceColumn.setPrefWidth(90);
         priceColumn.setCellFactory(column -> moneyCell());
 
         TableColumn<EmployeeSaleDetailRow, BigDecimal> totalColumn = new TableColumn<>("Total");
         totalColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-        totalColumn.setPrefWidth(110);
+        totalColumn.setPrefWidth(100);
         totalColumn.setCellFactory(column -> moneyCell());
 
         detailTable.getColumns().clear();
@@ -244,7 +249,9 @@ public class SalesHistoryController extends SidebarController {
         detailTable.getColumns().add(brandColumn);
         detailTable.getColumns().add(vehicleTypeColumn);
         detailTable.getColumns().add(modelCodeColumn);
+        detailTable.getColumns().add(stockNumberColumn);
         detailTable.getColumns().add(quantityColumn);
+        detailTable.getColumns().add(defaultPriceColumn);
         detailTable.getColumns().add(priceColumn);
         detailTable.getColumns().add(totalColumn);
 
@@ -296,7 +303,6 @@ public class SalesHistoryController extends SidebarController {
                 .filter(sale -> contains(String.valueOf(sale.getId()), normalizedSearch)
                         || contains(sale.getSellerName(), normalizedSearch)
                         || contains(sale.getEncodedBy(), normalizedSearch)
-                        || contains(sale.getReceiptTypeText(), normalizedSearch)
                         || contains(sale.getSoldDate().toString(), normalizedSearch))
                 .toList());
     }

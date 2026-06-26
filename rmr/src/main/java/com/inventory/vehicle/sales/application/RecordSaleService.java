@@ -78,6 +78,7 @@ public class RecordSaleService {
             saleItem.setSale(savedSale);
             saleItem.setProduct(product);
             saleItem.setQuantitySold(item.quantitySold());
+            saleItem.setOriginalPrice(item.originalPrice());
             saleItem.setPriceSold(item.priceSold());
             saleItem.setTotalAmount(itemTotal);
             saleItemRepository.save(saleItem);

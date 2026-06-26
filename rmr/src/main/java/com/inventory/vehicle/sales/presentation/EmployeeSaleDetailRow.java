@@ -15,8 +15,10 @@ public class EmployeeSaleDetailRow {
     private final String brandName;
     private final String vehicleTypeName;
     private final String modelCode;
+    private final String stockNumber;
     private final byte[] productImage;
     private final int quantitySold;
+    private final BigDecimal originalPrice;
     private final BigDecimal priceSold;
     private final BigDecimal totalAmount;
 
@@ -26,8 +28,10 @@ public class EmployeeSaleDetailRow {
         this.brandName = saleLine.brandName();
         this.vehicleTypeName = saleLine.vehicleTypeName();
         this.modelCode = saleLine.modelCode();
+        this.stockNumber = saleLine.stockNumber();
         this.productImage = saleLine.productImage();
         this.quantitySold = saleLine.quantitySold();
+        this.originalPrice = saleLine.originalPrice();
         this.priceSold = saleLine.priceSold();
         this.totalAmount = saleLine.totalAmount();
     }
@@ -52,6 +56,10 @@ public class EmployeeSaleDetailRow {
         return modelCode;
     }
 
+    public String getStockNumber() {
+        return stockNumber;
+    }
+
     public Image getImage() {
         if (productImage == null || productImage.length == 0) {
             return null;
@@ -61,6 +69,10 @@ public class EmployeeSaleDetailRow {
 
     public int getQuantitySold() {
         return quantitySold;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
     }
 
     public BigDecimal getPriceSold() {

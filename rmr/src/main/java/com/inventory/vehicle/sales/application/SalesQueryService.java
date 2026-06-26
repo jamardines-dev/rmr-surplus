@@ -3,6 +3,7 @@ package com.inventory.vehicle.sales.application;
 import com.inventory.vehicle.auth.application.SessionService;
 import com.inventory.vehicle.auth.domain.Role;
 import com.inventory.vehicle.common.exception.BusinessException;
+import com.inventory.vehicle.inventory.infrastructure.StockMovementRepository;
 import com.inventory.vehicle.sales.domain.Sale;
 import com.inventory.vehicle.sales.domain.SaleItem;
 import com.inventory.vehicle.sales.infrastructure.SaleItemRepository;
@@ -10,6 +11,7 @@ import com.inventory.vehicle.sales.infrastructure.SaleRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,11 +23,14 @@ public class SalesQueryService {
 
     private final SaleRepository saleRepository;
     private final SaleItemRepository saleItemRepository;
+    private final StockMovementRepository stockMovementRepository;
     private final SessionService sessionService;
 
-    public SalesQueryService(SaleRepository saleRepository, SaleItemRepository saleItemRepository, SessionService sessionService) {
+    public SalesQueryService(SaleRepository saleRepository, SaleItemRepository saleItemRepository,
+            StockMovementRepository stockMovementRepository, SessionService sessionService) {
         this.saleRepository = saleRepository;
         this.saleItemRepository = saleItemRepository;
+        this.stockMovementRepository = stockMovementRepository;
         this.sessionService = sessionService;
     }
 
@@ -50,40 +55,44 @@ public class SalesQueryService {
     @Transactional(readOnly = true)
     public List<SaleLineResult> findSaleLinesForSellerByDate(String sellerName, LocalDate soldDate) {
         String allowedSeller = resolveAllowedSeller(sellerName);
+        Map<Long, String> lastDrByProductId = buildLastDrMap();
         return saleItemRepository.findBySaleSellerNameIgnoreCaseAndSaleSoldDateOrderBySaleCreatedAtDesc(allowedSeller, soldDate)
                 .stream()
-                .map(this::toLineResult)
+                .map(item -> toLineResult(item, lastDrByProductId))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<SaleLineResult> findSaleLinesForSellerBetween(String sellerName, LocalDate startDate, LocalDate endDate) {
         String allowedSeller = resolveAllowedSeller(sellerName);
+        Map<Long, String> lastDrByProductId = buildLastDrMap();
         return saleItemRepository.findBySaleSellerNameIgnoreCaseAndSaleSoldDateBetweenOrderBySaleCreatedAtDesc(
                         allowedSeller,
                         startDate,
                         endDate
                 )
                 .stream()
-                .map(this::toLineResult)
+                .map(item -> toLineResult(item, lastDrByProductId))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<SaleLineResult> findAllSaleLinesForSeller(String sellerName) {
         String allowedSeller = resolveAllowedSeller(sellerName);
+        Map<Long, String> lastDrByProductId = buildLastDrMap();
         return saleItemRepository.findBySaleSellerNameIgnoreCaseOrderBySaleCreatedAtDesc(allowedSeller)
                 .stream()
-                .map(this::toLineResult)
+                .map(item -> toLineResult(item, lastDrByProductId))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<SaleLineResult> findSaleLinesByDate(LocalDate soldDate) {
         requireAdmin();
+        Map<Long, String> lastDrByProductId = buildLastDrMap();
         return saleItemRepository.findBySaleSoldDateOrderBySaleCreatedAtDesc(soldDate)
                 .stream()
-                .map(this::toLineResult)
+                .map(item -> toLineResult(item, lastDrByProductId))
                 .toList();
     }
 
@@ -141,7 +150,17 @@ public class SalesQueryService {
         }
     }
 
-    private SaleLineResult toLineResult(SaleItem saleItem) {
+    private SaleLineResult toLineResult(SaleItem saleItem, Map<Long, String> lastDrByProductId) {
+        byte[] firstImage = null;
+        String firstImageType = null;
+        if (!saleItem.getProduct().getImages().isEmpty()) {
+            var img = saleItem.getProduct().getImages().get(0);
+            firstImage = img.getImageData();
+            firstImageType = img.getImageType();
+        }
+
+        String stockNumber = lastDrByProductId.getOrDefault(saleItem.getProduct().getId(), "");
+
         return new SaleLineResult(
                 saleItem.getId(),
                 saleItem.getSale().getId(),
@@ -151,11 +170,20 @@ public class SalesQueryService {
                 saleItem.getProduct().getBrand().getName(),
                 saleItem.getProduct().getVehicleType().getName(),
                 saleItem.getProduct().getModelCode(),
-                saleItem.getProduct().getProductImage(),
-                saleItem.getProduct().getProductImageType(),
+                stockNumber,
+                firstImage,
+                firstImageType,
                 saleItem.getQuantitySold(),
+                saleItem.getOriginalPrice(),
                 saleItem.getPriceSold(),
                 saleItem.getTotalAmount()
         );
+    }
+
+    private Map<Long, String> buildLastDrMap() {
+        Map<Long, String> drMap = new HashMap<>();
+        stockMovementRepository.findRestocksWithDrNumbers()
+                .forEach(movement -> drMap.putIfAbsent(movement.getProduct().getId(), movement.getReferenceId()));
+        return drMap;
     }
 }

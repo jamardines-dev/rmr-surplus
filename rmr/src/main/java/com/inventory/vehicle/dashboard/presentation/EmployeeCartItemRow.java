@@ -10,8 +10,10 @@ public class EmployeeCartItemRow {
     private final String brandName;
     private final String vehicleTypeName;
     private final String modelCode;
+    private final String stockNumber;
+    private final BigDecimal originalPrice;
     private int quantity;
-    private final BigDecimal priceSold;
+    private BigDecimal priceSold;
 
     public EmployeeCartItemRow(ProductTableRow product, int quantity, BigDecimal priceSold) {
         this.productId = product.getId();
@@ -19,6 +21,8 @@ public class EmployeeCartItemRow {
         this.brandName = product.getBrandName();
         this.vehicleTypeName = product.getVehicleTypeName();
         this.modelCode = product.getModelCode();
+        this.stockNumber = product.getLastDrNumber();
+        this.originalPrice = priceSold;
         this.quantity = quantity;
         this.priceSold = priceSold;
     }
@@ -43,12 +47,24 @@ public class EmployeeCartItemRow {
         return modelCode;
     }
 
+    public String getStockNumber() {
+        return stockNumber;
+    }
+
     public int getQuantity() {
         return quantity;
     }
 
     public BigDecimal getPriceSold() {
         return priceSold;
+    }
+
+    public void setPriceSold(BigDecimal priceSold) {
+        this.priceSold = priceSold;
+    }
+
+    public BigDecimal getOriginalPrice() {
+        return originalPrice;
     }
 
     public BigDecimal getTotalAmount() {

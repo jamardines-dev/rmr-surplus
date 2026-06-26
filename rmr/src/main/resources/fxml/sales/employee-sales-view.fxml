@@ -40,13 +40,14 @@
                     <columns>
                         <TableColumn fx:id="saleImageColumn" prefWidth="80" text="Photo"/>
                         <TableColumn fx:id="saleTimeColumn" prefWidth="90" text="Time"/>
-                        <TableColumn fx:id="saleProductColumn" prefWidth="250" text="Product"/>
-                        <TableColumn fx:id="saleBrandColumn" prefWidth="140" text="Brand"/>
-                        <TableColumn fx:id="saleVehicleTypeColumn" prefWidth="150" text="Vehicle"/>
-                        <TableColumn fx:id="saleModelCodeColumn" prefWidth="120" text="Model"/>
-                        <TableColumn fx:id="saleQuantityColumn" prefWidth="80" text="Qty"/>
-                        <TableColumn fx:id="salePriceColumn" prefWidth="120" text="Price"/>
-                        <TableColumn fx:id="saleTotalColumn" prefWidth="130" text="Total"/>
+                        <TableColumn fx:id="saleProductColumn" prefWidth="220" text="Product"/>
+                        <TableColumn fx:id="saleBrandColumn" prefWidth="110" text="Brand"/>
+                        <TableColumn fx:id="saleVehicleTypeColumn" prefWidth="130" text="Vehicle"/>
+                        <TableColumn fx:id="saleModelCodeColumn" prefWidth="100" text="Model"/>
+                        <TableColumn fx:id="saleStockNumberColumn" prefWidth="90" text="Stock#"/>
+                        <TableColumn fx:id="saleQuantityColumn" prefWidth="70" text="Qty"/>
+                        <TableColumn fx:id="salePriceColumn" prefWidth="110" text="Price"/>
+                        <TableColumn fx:id="saleTotalColumn" prefWidth="120" text="Total"/>
                     </columns>
                 </TableView>
             </VBox>

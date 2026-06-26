@@ -1,5 +1,6 @@
 package com.inventory.vehicle.product.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -8,12 +9,16 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -43,11 +48,9 @@ public class Product {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(name = "product_image", columnDefinition = "bytea")
-    private byte[] productImage;
-
-    @Column(length = 80)
-    private String productImageType;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder")
+    private List<ProductImage> images = new ArrayList<>();
 
     private LocalDate lastRestockedDate;
 
@@ -124,20 +127,24 @@ public class Product {
         this.unitPrice = unitPrice;
     }
 
-    public byte[] getProductImage() {
-        return productImage;
+    public List<ProductImage> getImages() {
+        return images;
     }
 
-    public void setProductImage(byte[] productImage) {
-        this.productImage = productImage;
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
     }
 
-    public String getProductImageType() {
-        return productImageType;
+    public void addImage(byte[] data, String type) {
+        if (images.size() >= 4) {
+            throw new IllegalArgumentException("Cannot add more than 4 images per product.");
+        }
+        ProductImage image = new ProductImage(this, data, type, images.size());
+        images.add(image);
     }
 
-    public void setProductImageType(String productImageType) {
-        this.productImageType = productImageType;
+    public void removeImage(Long imageId) {
+        images.removeIf(img -> img.getId().equals(imageId));
     }
 
     public LocalDate getLastRestockedDate() {

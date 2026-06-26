@@ -57,6 +57,9 @@ public class EmployeeSalesController extends SidebarController {
     private TableColumn<EmployeeSaleTableRow, String> saleModelCodeColumn;
 
     @FXML
+    private TableColumn<EmployeeSaleTableRow, String> saleStockNumberColumn;
+
+    @FXML
     private TableColumn<EmployeeSaleTableRow, Integer> saleQuantityColumn;
 
     @FXML
@@ -88,6 +91,7 @@ public class EmployeeSalesController extends SidebarController {
         saleBrandColumn.setCellValueFactory(new PropertyValueFactory<>("brandName"));
         saleVehicleTypeColumn.setCellValueFactory(new PropertyValueFactory<>("vehicleTypeName"));
         saleModelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
+        saleStockNumberColumn.setCellValueFactory(new PropertyValueFactory<>("stockNumber"));
         saleQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantitySold"));
         salePriceColumn.setCellValueFactory(new PropertyValueFactory<>("priceSold"));
         saleTotalColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
@@ -162,9 +166,10 @@ public class EmployeeSalesController extends SidebarController {
         addDetailRow(details, 0, 0, "Brand", sale.getBrandName());
         addDetailRow(details, 1, 0, "Vehicle", sale.getVehicleTypeName());
         addDetailRow(details, 0, 1, "Model", sale.getModelCode());
-        addDetailRow(details, 1, 1, "Time", sale.getTime());
+        addDetailRow(details, 1, 1, "Stock#", sale.getStockNumber().isEmpty() ? "-" : sale.getStockNumber());
         addDetailRow(details, 0, 2, "Quantity", String.valueOf(sale.getQuantitySold()));
         addDetailRow(details, 1, 2, "Price", MoneyFormat.peso(sale.getPriceSold()));
+        addDetailRow(details, 0, 3, "Time", sale.getTime());
 
         VBox totalCard = new VBox(4);
         totalCard.getStyleClass().add("summary-card");
@@ -235,6 +240,10 @@ public class EmployeeSalesController extends SidebarController {
     }
 
     private void undoSaleItem(EmployeeSaleTableRow sale) {
+        if (!confirm("Undo Sale", "Are you sure you want to undo " + sale.getProductName() + "?\nStock will be restored.")) {
+            return;
+        }
+
         try {
             Long saleId = recordSaleService.undoSaleItemForSeller(
                     sale.getSaleItemId(),
@@ -245,6 +254,18 @@ public class EmployeeSalesController extends SidebarController {
         } catch (BusinessException exception) {
             messageLabel.setText(exception.getMessage());
         }
+    }
+
+    private boolean confirm(String title, String message) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(title);
+        dialog.setHeaderText(title);
+        dialog.setContentText(message);
+        dialog.getDialogPane().getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().getStylesheets().add(getClass().getResource("/css/global.css").toExternalForm());
+        return dialog.showAndWait()
+                .filter(buttonType -> buttonType == ButtonType.OK)
+                .isPresent();
     }
 
 }

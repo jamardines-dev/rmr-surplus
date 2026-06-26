@@ -1,5 +1,6 @@
 package com.inventory.vehicle.server.product;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -8,9 +9,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -39,6 +45,12 @@ public class Product {
 
     @Column(nullable = false)
     private BigDecimal unitPrice;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder")
+    private List<ProductImage> images = new ArrayList<>();
+
+    private LocalDate lastRestockedDate;
 
     @Column(nullable = false)
     private boolean active;
@@ -117,5 +129,39 @@ public class Product {
         }
         this.currentStock -= quantity;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void restock(int quantity, LocalDate restockedDate) {
+        this.currentStock += quantity;
+        this.lastRestockedDate = restockedDate;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public List<ProductImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
+    }
+
+    public void addImage(byte[] data, String type) {
+        if (images.size() >= 4) {
+            throw new IllegalArgumentException("Cannot add more than 4 images per product.");
+        }
+        ProductImage image = new ProductImage(this, data, type, images.size());
+        images.add(image);
+    }
+
+    public void removeImage(Long imageId) {
+        images.removeIf(img -> img.getId().equals(imageId));
+    }
+
+    public LocalDate getLastRestockedDate() {
+        return lastRestockedDate;
+    }
+
+    public void setLastRestockedDate(LocalDate lastRestockedDate) {
+        this.lastRestockedDate = lastRestockedDate;
     }
 }

@@ -6,6 +6,7 @@ import com.inventory.vehicle.common.util.MoneyFormat;
 import com.inventory.vehicle.navigation.SceneManager;
 import com.inventory.vehicle.navigation.SidebarController;
 import com.inventory.vehicle.product.application.CreateProductCommand;
+import com.inventory.vehicle.product.application.NewProductImage;
 import com.inventory.vehicle.product.application.ProductQueryService;
 import com.inventory.vehicle.product.application.ProductResult;
 import com.inventory.vehicle.product.application.ProductService;
@@ -51,8 +52,7 @@ public class ProductListController extends SidebarController {
     private final ProductQueryService productQueryService;
     private final ProductService productService;
     private List<ProductTableRow> allProducts = List.of();
-    private byte[] selectedImage;
-    private String selectedImageType;
+    private java.util.List<NewProductImage> selectedImages = new java.util.ArrayList<>();
 
     @FXML
     private TableView<ProductTableRow> productTable;
@@ -83,6 +83,9 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private TableColumn<ProductTableRow, String> restockedColumn;
+
+    @FXML
+    private TableColumn<ProductTableRow, String> drNumberColumn;
 
     @FXML
     private TextField searchField;
@@ -117,6 +120,8 @@ public class ProductListController extends SidebarController {
     @FXML
     private Label messageLabel;
 
+    private Label drNumberDisplayLabel;
+
     public ProductListController(
             SceneManager sceneManager,
             SessionService sessionService,
@@ -140,6 +145,7 @@ public class ProductListController extends SidebarController {
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
         priceColumn.setCellFactory(column -> moneyCell());
         restockedColumn.setCellValueFactory(new PropertyValueFactory<>("lastRestockedDateText"));
+        drNumberColumn.setCellValueFactory(new PropertyValueFactory<>("lastDrNumber"));
         productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         productTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, selectedProduct) -> {
@@ -231,8 +237,7 @@ public class ProductListController extends SidebarController {
             priceField.clear();
             lastRestockedDatePicker.setValue(null);
         }
-        selectedImage = null;
-        selectedImageType = null;
+        selectedImages.clear();
         if (productImageView != null) {
             productImageView.setImage(null);
         }
@@ -243,6 +248,11 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private void chooseProductImage() {
+        if (selectedImages.size() >= 4) {
+            messageLabel.setText("Maximum 4 images allowed. Remove an image to add another.");
+            return;
+        }
+
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Choose Product Photo");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
@@ -250,19 +260,20 @@ public class ProductListController extends SidebarController {
                 "*.png",
                 "*.jpg",
                 "*.jpeg",
-                "*.gif"
-        ));
+                "*.gif"));
         File file = fileChooser.showOpenDialog(productTable.getScene().getWindow());
         if (file == null) {
             return;
         }
 
         try {
-            selectedImage = Files.readAllBytes(file.toPath());
-            selectedImageType = Files.probeContentType(file.toPath());
+            byte[] imageData = Files.readAllBytes(file.toPath());
+            String imageType = Files.probeContentType(file.toPath());
+            selectedImages.add(new NewProductImage(imageData, imageType));
             productImageView.setImage(new Image(file.toURI().toString()));
-            imageNameLabel.setText(file.getName());
-            messageLabel.setText("Photo selected.");
+            imageNameLabel.setText("(" + selectedImages.size() + "/4 images) " + file.getName());
+            messageLabel.setText(
+                    "Photo " + selectedImages.size() + " added. " + (4 - selectedImages.size()) + " more allowed.");
         } catch (IOException exception) {
             messageLabel.setText("Could not load product photo.");
         }
@@ -270,17 +281,19 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private void removeProductImage() {
-        selectedImage = null;
-        selectedImageType = null;
-        productImageView.setImage(null);
-        imageNameLabel.setText("No photo selected");
-        messageLabel.setText("Photo removed.");
+        if (!selectedImages.isEmpty()) {
+            selectedImages.remove(selectedImages.size() - 1);
+            productImageView.setImage(null);
+            imageNameLabel.setText(
+                    selectedImages.isEmpty() ? "No photo selected" : "(" + selectedImages.size() + "/4 images)");
+            messageLabel.setText(selectedImages.isEmpty() ? "Photo removed."
+                    : "Photo removed. " + (4 - selectedImages.size()) + " more allowed.");
+        }
     }
 
     private void openProductDetailsModal(ProductTableRow product) {
         initializeProductFormFields();
-        selectedImage = null;
-        selectedImageType = null;
+        selectedImages.clear();
         if (product != null) {
             fillForm(product);
         }
@@ -290,7 +303,8 @@ public class ProductListController extends SidebarController {
         dialog.setHeaderText(product == null ? "Create a new product." : "Edit product details.");
         dialog.initOwner(productTable.getScene().getWindow());
 
-        ButtonType saveButtonType = new ButtonType(product == null ? "Create Product" : "Save Changes", ButtonBar.ButtonData.OK_DONE);
+        ButtonType saveButtonType = new ButtonType(product == null ? "Create Product" : "Save Changes",
+                ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
         Label productErrorLabel = new Label();
         productErrorLabel.getStyleClass().add("message");
@@ -308,7 +322,8 @@ public class ProductListController extends SidebarController {
                 saveProductUpdate(product.getId());
             }
             if (messageLabel.getText() != null
-                    && (messageLabel.getText().equals("Product created.") || messageLabel.getText().equals("Product updated."))) {
+                    && (messageLabel.getText().equals("Product created.")
+                            || messageLabel.getText().equals("Product updated."))) {
                 return;
             }
             event.consume();
@@ -327,6 +342,8 @@ public class ProductListController extends SidebarController {
         imageNameLabel = new Label("No photo selected");
         imageNameLabel.setWrapText(true);
         imageNameLabel.getStyleClass().add("subtitle");
+        drNumberDisplayLabel = new Label("Stock Number: —");
+        drNumberDisplayLabel.getStyleClass().add("subtitle");
         productNameField = new TextField();
         productNameField.setPromptText("Starter solenoid");
         brandField = new TextField();
@@ -369,6 +386,7 @@ public class ProductListController extends SidebarController {
                 productImageView,
                 imageActions,
                 imageNameLabel,
+                drNumberDisplayLabel,
                 labeledField("Product", productNameField),
                 labeledField("Brand", brandField),
                 labeledField("Vehicle", vehicleTypeField),
@@ -383,14 +401,11 @@ public class ProductListController extends SidebarController {
     private void openRestockModal() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Restock / Add Stock");
-        dialog.setHeaderText("Create a new DR batch and add new products under it.");
         dialog.initOwner(productTable.getScene().getWindow());
 
         ButtonType applyButtonType = new ButtonType("Apply Restock", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(applyButtonType, ButtonType.CANCEL);
 
-        TextField drNumberField = new TextField();
-        drNumberField.setPromptText("DR number");
         DatePicker restockedDatePicker = new DatePicker(LocalDate.now());
         Button addProductButton = new Button("Add New Product");
         Button removeProductButton = new Button("Remove Selected");
@@ -415,7 +430,6 @@ public class ProductListController extends SidebarController {
         content.getStyleClass().add("modal-content");
         HBox restockMeta = new HBox(10);
         restockMeta.getChildren().addAll(
-                labeledField("DR Number", drNumberField),
                 labeledField("Restock Date", restockedDatePicker));
         HBox addProductRow = new HBox(10);
         addProductRow.getStyleClass().add("modal-actions");
@@ -432,12 +446,10 @@ public class ProductListController extends SidebarController {
                         .map(RestockProductRow::toCreateCommand)
                         .toList();
                 productService.restockNewProducts(new RestockNewProductsCommand(
-                        drNumberField.getText(),
                         restockedDatePicker.getValue(),
                         products));
                 refreshProducts();
-                messageLabel.setText("Created and restocked " + products.size()
-                        + " new product(s) under DR " + drNumberField.getText().trim() + ".");
+                messageLabel.setText("Created and restocked " + products.size() + " new product(s).");
             } catch (BusinessException | NumberFormatException exception) {
                 event.consume();
                 restockErrorLabel.setText(exception.getMessage());
@@ -466,6 +478,8 @@ public class ProductListController extends SidebarController {
         vehicleTypeField.setPromptText("Vehicle");
         TextField modelCodeField = new TextField();
         modelCodeField.setPromptText("Model");
+        TextField drNumberField = new TextField();
+        drNumberField.setPromptText("Stock Number");
         TextField quantityField = new TextField();
         quantityField.setPromptText("Restock quantity");
         TextField priceField = new TextField();
@@ -482,13 +496,14 @@ public class ProductListController extends SidebarController {
         String[] productImageType = new String[1];
         Button choosePhotoButton = new Button("Choose Photo");
         choosePhotoButton.getStyleClass().add("secondary");
-        choosePhotoButton.setOnAction(event -> chooseRestockProductImage(photoPreview, photoLabel, productImage, productImageType));
+        choosePhotoButton.setOnAction(
+                event -> chooseRestockProductImage(photoPreview, photoLabel, productImage, productImageType));
         Label productErrorLabel = new Label();
         productErrorLabel.getStyleClass().add("message");
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Add New Product");
-        dialog.setHeaderText("Add one new product to this DR batch.");
+        dialog.setHeaderText("Add one new product with its DR number.");
         dialog.initOwner(productTable.getScene().getWindow());
 
         ButtonType addButtonType = new ButtonType("Save Product", ButtonBar.ButtonData.OK_DONE);
@@ -512,6 +527,7 @@ public class ProductListController extends SidebarController {
                 labeledField("Brand", brandField),
                 labeledField("Vehicle", vehicleTypeField),
                 labeledField("Model", modelCodeField),
+                labeledField("Stock Number", drNumberField),
                 quantityPriceRow,
                 productErrorLabel);
         dialog.getDialogPane().setContent(content);
@@ -525,12 +541,14 @@ public class ProductListController extends SidebarController {
                         brandField.getText(),
                         vehicleTypeField.getText(),
                         modelCodeField.getText(),
+                        drNumberField.getText(),
                         quantityField.getText(),
                         priceField.getText(),
                         productImage[0],
                         productImageType[0]);
-                if (restockRows.stream().anyMatch(existingRow -> existingRow.getModelCode().equalsIgnoreCase(row.getModelCode()))) {
-                    throw new BusinessException("Model is already in this DR batch.");
+                if (restockRows.stream()
+                        .anyMatch(existingRow -> existingRow.getModelCode().equalsIgnoreCase(row.getModelCode()))) {
+                    throw new BusinessException("Model is already in this restock.");
                 }
                 restockRows.add(row);
                 restockErrorLabel.setText("");
@@ -555,8 +573,7 @@ public class ProductListController extends SidebarController {
                 "*.png",
                 "*.jpg",
                 "*.jpeg",
-                "*.gif"
-        ));
+                "*.gif"));
         File file = fileChooser.showOpenDialog(productTable.getScene().getWindow());
         if (file == null) {
             return;
@@ -594,6 +611,10 @@ public class ProductListController extends SidebarController {
         modelColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getModelCode()));
         modelColumn.setPrefWidth(130);
 
+        TableColumn<RestockProductRow, String> drColumn = new TableColumn<>("Stock Number");
+        drColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getDrNumber()));
+        drColumn.setPrefWidth(100);
+
         TableColumn<RestockProductRow, Integer> quantityColumn = new TableColumn<>("Qty");
         quantityColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getQuantity()));
         quantityColumn.setPrefWidth(90);
@@ -607,6 +628,7 @@ public class ProductListController extends SidebarController {
         restockTable.getColumns().add(productColumn);
         restockTable.getColumns().add(brandColumn);
         restockTable.getColumns().add(modelColumn);
+        restockTable.getColumns().add(drColumn);
         restockTable.getColumns().add(quantityColumn);
         restockTable.getColumns().add(priceColumn);
         return restockTable;
@@ -677,10 +699,10 @@ public class ProductListController extends SidebarController {
         stockQuantityField.setText(String.valueOf(product.getCurrentStock()));
         priceField.setText(product.getUnitPrice().toPlainString());
         lastRestockedDatePicker.setValue(product.getLastRestockedDate());
-        selectedImage = product.getProductImage();
-        selectedImageType = product.getProductImageType();
+        selectedImages.clear();
         productImageView.setImage(product.getImage());
         imageNameLabel.setText(product.getImage() == null ? "No photo selected" : "Saved product photo");
+        drNumberDisplayLabel.setText("Stock Number: " + product.getLastDrNumber());
     }
 
     private CreateProductCommand toCreateCommand() {
@@ -691,9 +713,9 @@ public class ProductListController extends SidebarController {
                 modelCodeField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
                 parsePrice(),
-                selectedImage,
-                selectedImageType,
-                lastRestockedDatePicker.getValue());
+                new java.util.ArrayList<>(selectedImages),
+                lastRestockedDatePicker.getValue(),
+                null);
     }
 
     private UpdateProductCommand toUpdateCommand(Long productId) {
@@ -705,8 +727,8 @@ public class ProductListController extends SidebarController {
                 modelCodeField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
                 parsePrice(),
-                selectedImage,
-                selectedImageType,
+                new java.util.ArrayList<>(),
+                new java.util.ArrayList<>(selectedImages),
                 lastRestockedDatePicker.getValue());
     }
 
@@ -805,6 +827,7 @@ public class ProductListController extends SidebarController {
         private final String brandName;
         private final String vehicleTypeName;
         private final String modelCode;
+        private final String drNumber;
         private final int quantity;
         private final BigDecimal unitPrice;
         private final byte[] productImage;
@@ -815,6 +838,7 @@ public class ProductListController extends SidebarController {
                 String brandName,
                 String vehicleTypeName,
                 String modelCode,
+                String drNumber,
                 int quantity,
                 BigDecimal unitPrice,
                 byte[] productImage,
@@ -823,6 +847,7 @@ public class ProductListController extends SidebarController {
             this.brandName = brandName;
             this.vehicleTypeName = vehicleTypeName;
             this.modelCode = modelCode;
+            this.drNumber = drNumber;
             this.quantity = quantity;
             this.unitPrice = unitPrice;
             this.productImage = productImage;
@@ -834,6 +859,7 @@ public class ProductListController extends SidebarController {
                 String brandName,
                 String vehicleTypeName,
                 String modelCode,
+                String drNumber,
                 String quantityText,
                 String priceText,
                 byte[] productImage,
@@ -842,6 +868,7 @@ public class ProductListController extends SidebarController {
             String cleanBrandName = requireText(brandName, "Brand");
             String cleanVehicleTypeName = requireText(vehicleTypeName, "Vehicle");
             String cleanModelCode = requireText(modelCode, "Model");
+            String cleanDrNumber = requireText(drNumber, "Stock Number");
             int quantity = parseQuantityText(quantityText);
             if (quantity <= 0) {
                 throw new NumberFormatException("Restock quantity must be greater than 0.");
@@ -852,6 +879,7 @@ public class ProductListController extends SidebarController {
                     cleanBrandName,
                     cleanVehicleTypeName,
                     cleanModelCode,
+                    cleanDrNumber,
                     quantity,
                     unitPrice,
                     productImage,
@@ -911,6 +939,10 @@ public class ProductListController extends SidebarController {
             return modelCode;
         }
 
+        private String getDrNumber() {
+            return drNumber;
+        }
+
         private int getQuantity() {
             return quantity;
         }
@@ -927,6 +959,10 @@ public class ProductListController extends SidebarController {
         }
 
         private CreateProductCommand toCreateCommand() {
+            java.util.List<NewProductImage> images = new java.util.ArrayList<>();
+            if (productImage != null && productImage.length > 0) {
+                images.add(new NewProductImage(productImage, productImageType));
+            }
             return new CreateProductCommand(
                     productName,
                     brandName,
@@ -934,9 +970,9 @@ public class ProductListController extends SidebarController {
                     modelCode,
                     quantity,
                     unitPrice,
-                    productImage,
-                    productImageType,
-                    null);
+                    images,
+                    null,
+                    drNumber);
         }
     }
 }

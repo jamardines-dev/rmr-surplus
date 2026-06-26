@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record CartSaleItemCommand(
         Long productId,
         int quantitySold,
+        BigDecimal originalPrice,
         BigDecimal priceSold
 ) {
 }

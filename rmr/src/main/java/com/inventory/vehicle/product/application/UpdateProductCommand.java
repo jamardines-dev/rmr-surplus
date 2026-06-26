@@ -2,6 +2,7 @@ package com.inventory.vehicle.product.application;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public record UpdateProductCommand(
         Long productId,
@@ -11,8 +12,8 @@ public record UpdateProductCommand(
         String modelCode,
         int currentStock,
         BigDecimal unitPrice,
-        byte[] productImage,
-        String productImageType,
+        List<Long> removedImageIds,
+        List<NewProductImage> addedImages,
         LocalDate lastRestockedDate
 ) {
 }

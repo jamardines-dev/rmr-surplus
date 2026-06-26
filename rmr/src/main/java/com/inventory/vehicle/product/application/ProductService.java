@@ -62,8 +62,11 @@ public class ProductService {
         product.setModelCode(command.modelCode().trim());
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
-        product.setProductImage(command.productImage());
-        product.setProductImageType(trimToNull(command.productImageType()));
+        if (command.images() != null) {
+            for (NewProductImage img : command.images()) {
+                product.addImage(img.data(), img.type());
+            }
+        }
         product.setLastRestockedDate(command.lastRestockedDate());
 
         Product savedProduct = productRepository.save(product);
@@ -85,8 +88,18 @@ public class ProductService {
         product.setModelCode(command.modelCode().trim());
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
-        product.setProductImage(command.productImage());
-        product.setProductImageType(trimToNull(command.productImageType()));
+
+        if (command.removedImageIds() != null) {
+            for (Long imageId : command.removedImageIds()) {
+                product.removeImage(imageId);
+            }
+        }
+        if (command.addedImages() != null) {
+            for (NewProductImage img : command.addedImages()) {
+                product.addImage(img.data(), img.type());
+            }
+        }
+
         product.setLastRestockedDate(command.lastRestockedDate());
 
         Product savedProduct = productRepository.save(product);
@@ -109,16 +122,18 @@ public class ProductService {
     public void restockProducts(RestockProductsCommand command) {
         requireAdmin();
 
-        String drNumber = trimToNull(command.drNumber());
-        if (drNumber == null) {
-            throw new BusinessException("DR number is required.");
-        }
-
         List<RestockProductItemCommand> items = command.items() == null ? List.of() : command.items().stream()
                 .filter(item -> item.productId() != null && item.quantity() > 0)
                 .toList();
         if (items.isEmpty()) {
             throw new BusinessException("Add at least one product quantity to restock.");
+        }
+
+        for (RestockProductItemCommand item : items) {
+            String drNumber = trimToNull(item.drNumber());
+            if (drNumber == null) {
+                throw new BusinessException("DR number is required for all items.");
+            }
         }
 
         LocalDate restockedDate = command.restockedDate() == null ? LocalDate.now() : command.restockedDate();
@@ -132,6 +147,7 @@ public class ProductService {
             product.setLastRestockedDate(restockedDate);
             productRepository.save(product);
 
+            String drNumber = trimToNull(item.drNumber());
             StockMovement movement = new StockMovement();
             movement.setProduct(product);
             movement.setMovementType(StockMovementType.RESTOCK);
@@ -146,7 +162,7 @@ public class ProductService {
 
         auditService.record(
                 "RESTOCK_PRODUCTS",
-                "Restocked " + items.size() + " product(s) from DR " + drNumber,
+                "Restocked " + items.size() + " product(s)",
                 username);
     }
 
@@ -154,14 +170,16 @@ public class ProductService {
     public void restockNewProducts(RestockNewProductsCommand command) {
         requireAdmin();
 
-        String drNumber = trimToNull(command.drNumber());
-        if (drNumber == null) {
-            throw new BusinessException("DR number is required.");
-        }
-
         List<CreateProductCommand> products = command.products() == null ? List.of() : command.products();
         if (products.isEmpty()) {
             throw new BusinessException("Add at least one new product to restock.");
+        }
+
+        for (CreateProductCommand productCommand : products) {
+            String drNumber = trimToNull(productCommand.drNumber());
+            if (drNumber == null) {
+                throw new BusinessException("DR number is required for all products.");
+            }
         }
 
         Set<String> modelCodes = new HashSet<>();
@@ -169,7 +187,7 @@ public class ProductService {
             validate(productCommand);
             String normalizedModelCode = productCommand.modelCode().trim().toLowerCase();
             if (!modelCodes.add(normalizedModelCode)) {
-                throw new BusinessException("Model " + productCommand.modelCode().trim() + " is duplicated in this DR.");
+                throw new BusinessException("Model " + productCommand.modelCode().trim() + " is duplicated in this restock.");
             }
         }
 
@@ -186,11 +204,16 @@ public class ProductService {
             product.setModelCode(productCommand.modelCode().trim());
             product.setCurrentStock(productCommand.currentStock());
             product.setUnitPrice(productCommand.unitPrice());
-            product.setProductImage(productCommand.productImage());
-            product.setProductImageType(trimToNull(productCommand.productImageType()));
+            if (productCommand.images() != null) {
+                for (NewProductImage img : productCommand.images()) {
+                    product.addImage(img.data(), img.type());
+                }
+            }
             product.setLastRestockedDate(restockedDate);
 
             Product savedProduct = productRepository.save(product);
+
+            String drNumber = trimToNull(productCommand.drNumber());
             StockMovement movement = new StockMovement();
             movement.setProduct(savedProduct);
             movement.setMovementType(StockMovementType.RESTOCK);
@@ -205,7 +228,7 @@ public class ProductService {
 
         auditService.record(
                 "RESTOCK_NEW_PRODUCTS",
-                "Created and restocked " + products.size() + " new product(s) from DR " + drNumber,
+                "Created and restocked " + products.size() + " new product(s)",
                 username);
     }
 

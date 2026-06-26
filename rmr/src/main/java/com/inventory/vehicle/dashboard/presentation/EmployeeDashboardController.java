@@ -3,6 +3,7 @@ package com.inventory.vehicle.dashboard.presentation;
 import com.inventory.vehicle.auth.application.SessionService;
 import com.inventory.vehicle.common.exception.BusinessException;
 import com.inventory.vehicle.common.util.MoneyFormat;
+import com.inventory.vehicle.common.util.ReceiptPrinter;
 import com.inventory.vehicle.navigation.SceneManager;
 import com.inventory.vehicle.navigation.SidebarController;
 import com.inventory.vehicle.product.application.ProductQueryService;
@@ -26,6 +27,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -64,7 +66,13 @@ public class EmployeeDashboardController extends SidebarController {
     private TableColumn<EmployeeCartItemRow, String> cartModelCodeColumn;
 
     @FXML
+    private TableColumn<EmployeeCartItemRow, String> cartStockNumberColumn;
+
+    @FXML
     private TableColumn<EmployeeCartItemRow, Integer> cartQuantityColumn;
+
+    @FXML
+    private TableColumn<EmployeeCartItemRow, BigDecimal> cartOriginalPriceColumn;
 
     @FXML
     private TableColumn<EmployeeCartItemRow, BigDecimal> cartPriceColumn;
@@ -92,12 +100,30 @@ public class EmployeeDashboardController extends SidebarController {
     private void initialize() {
         cartProductColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
         cartModelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
+        cartStockNumberColumn.setCellValueFactory(new PropertyValueFactory<>("stockNumber"));
         cartQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        cartOriginalPriceColumn.setCellValueFactory(new PropertyValueFactory<>("originalPrice"));
         cartPriceColumn.setCellValueFactory(new PropertyValueFactory<>("priceSold"));
         cartTotalColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-        cartPriceColumn.setCellFactory(column -> moneyCell());
+        cartOriginalPriceColumn.setCellFactory(column -> moneyCell());
+        cartPriceColumn.setCellFactory(column -> editablePriceCell());
         cartTotalColumn.setCellFactory(column -> moneyCell());
+        cartTable.setEditable(true);
         cartTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        cartTable.setRowFactory(tv -> {
+            TableRow<EmployeeCartItemRow> row = new TableRow<>() {
+                @Override
+                protected void updateItem(EmployeeCartItemRow item, boolean empty) {
+                    super.updateItem(item, empty);
+                }
+            };
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    cartTable.edit(row.getIndex(), cartPriceColumn);
+                }
+            });
+            return row;
+        });
         cartTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, selectedItem) -> {
             if (selectedItem == null) {
                 cartQuantityField.clear();
@@ -193,8 +219,13 @@ public class EmployeeDashboardController extends SidebarController {
                     "Delivery Receipt",
                     cartItems.stream()
                             .map(item -> new CartSaleItemCommand(item.getProductId(), item.getQuantity(),
-                                    item.getPriceSold()))
+                                    item.getOriginalPrice(), item.getPriceSold()))
                             .toList()));
+            ReceiptPrinter.printReceipt(
+                    sessionService.getCurrentDisplayName(),
+                    LocalDate.now(),
+                    new ArrayList<>(cartItems),
+                    saleId);
             cartItems.clear();
             refreshCart();
             refreshProducts();
@@ -292,6 +323,9 @@ public class EmployeeDashboardController extends SidebarController {
         Label stockLabel = new Label("Stock: " + product.getCurrentStock());
         stockLabel.getStyleClass().add("field-label");
 
+        Label drLabel = new Label(product.getLastDrNumber().isEmpty() ? "" : "DR: " + product.getLastDrNumber());
+        drLabel.getStyleClass().add("field-label");
+
         Label priceLabel = new Label(MoneyFormat.peso(product.getUnitPrice()));
         priceLabel.getStyleClass().add("summary-value-small");
 
@@ -317,7 +351,7 @@ public class EmployeeDashboardController extends SidebarController {
         cartControls.setAlignment(Pos.CENTER_LEFT);
         cartControls.setOnMouseClicked(event -> event.consume());
 
-        VBox card = new VBox(8, imageBox, nameLabel, metaLabel, new HBox(10, stockLabel, priceLabel), cartControls);
+        VBox card = new VBox(8, imageBox, nameLabel, metaLabel, new HBox(10, stockLabel, drLabel), new HBox(10, priceLabel), cartControls);
         card.setPadding(new Insets(12));
         card.setPrefWidth(210);
         card.setMinHeight(260);
@@ -396,7 +430,8 @@ public class EmployeeDashboardController extends SidebarController {
         addDetail(details, 0, 1, "Type", product.getVehicleTypeName());
         addDetail(details, 1, 1, "Model", product.getModelCode());
         addDetail(details, 0, 2, "Stock", String.valueOf(product.getCurrentStock()));
-        addDetail(details, 1, 2, "Default Price", MoneyFormat.peso(product.getUnitPrice()));
+        addDetail(details, 1, 2, "DR Number", product.getLastDrNumber().isEmpty() ? "-" : product.getLastDrNumber());
+        addDetail(details, 0, 3, "Default Price", MoneyFormat.peso(product.getUnitPrice()));
 
         VBox content = new VBox(14, photoBox, details);
         content.setPrefWidth(560);
@@ -456,6 +491,87 @@ public class EmployeeDashboardController extends SidebarController {
             protected void updateItem(BigDecimal amount, boolean empty) {
                 super.updateItem(amount, empty);
                 setText(empty ? null : MoneyFormat.peso(amount));
+            }
+        };
+    }
+
+    private TableCell<EmployeeCartItemRow, BigDecimal> editablePriceCell() {
+        return new TableCell<>() {
+            private TextField priceField;
+
+            @Override
+            protected void updateItem(BigDecimal amount, boolean empty) {
+                super.updateItem(amount, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+
+                if (isEditing()) {
+                    if (priceField == null) {
+                        priceField = new TextField();
+                        priceField.setPrefWidth(80);
+                        priceField.setOnAction(event -> commitEdit(parsePrice(priceField.getText())));
+                        priceField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                            if (!newVal && priceField.getText() != null && !priceField.getText().isEmpty()) {
+                                try {
+                                    commitEdit(parsePrice(priceField.getText()));
+                                } catch (NumberFormatException e) {
+                                    cancelEdit();
+                                }
+                            }
+                        });
+                    }
+                    priceField.setText(amount == null ? "" : amount.toString());
+                    setGraphic(priceField);
+                    setText(null);
+                    priceField.requestFocus();
+                    priceField.selectAll();
+                } else {
+                    setGraphic(null);
+                    setText(MoneyFormat.peso(amount));
+                }
+            }
+
+            @Override
+            public void startEdit() {
+                if (!isEmpty()) {
+                    super.startEdit();
+                    updateItem(getItem(), false);
+                }
+            }
+
+            @Override
+            public void commitEdit(BigDecimal newValue) {
+                super.commitEdit(newValue);
+                EmployeeCartItemRow cartItem = getTableRow().getItem();
+                if (cartItem != null) {
+                    cartItem.setPriceSold(newValue);
+                    refreshCart();
+                }
+            }
+
+            @Override
+            public void cancelEdit() {
+                super.cancelEdit();
+                updateItem(getItem(), false);
+            }
+
+            private BigDecimal parsePrice(String text) {
+                if (text == null || text.isBlank()) {
+                    throw new NumberFormatException("Price is required.");
+                }
+                try {
+                    BigDecimal price = new BigDecimal(text.trim());
+                    if (price.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new NumberFormatException("Price must be greater than zero.");
+                    }
+                    return price;
+                } catch (NumberFormatException e) {
+                    messageLabel.setText("Invalid price format. Enter a valid number.");
+                    throw e;
+                }
             }
         };
     }
