@@ -6,11 +6,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import javafx.print.Printer;
-import javafx.print.PrinterJob;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
+import javax.print.Doc;
+import javax.print.DocFlavor;
+import javax.print.DocPrintJob;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import javax.print.SimpleDoc;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
 
 public class ReceiptPrinter {
 
@@ -21,22 +24,17 @@ public class ReceiptPrinter {
             Long saleId) {
         try {
             String receiptContent = buildReceiptContent(employeeName, saleDate, cartItems, saleId);
-            Printer defaultPrinter = Printer.getDefaultPrinter();
+            PrintService defaultPrinter = PrintServiceLookup.lookupDefaultPrintService();
             if (defaultPrinter == null) {
                 return false;
             }
 
-            PrinterJob job = PrinterJob.createPrinterJob(defaultPrinter);
-            if (job == null) {
-                return false;
-            }
-
-            TextFlow textFlow = createReceiptTextFlow(receiptContent);
-            boolean success = job.printPage(textFlow);
-            if (success) {
-                job.endJob();
-            }
-            return success;
+            DocPrintJob job = defaultPrinter.createPrintJob();
+            DocFlavor flavor = DocFlavor.STRING.TEXT_PLAIN;
+            Doc doc = new SimpleDoc(receiptContent, flavor, null);
+            PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
+            job.print(doc, attributes);
+            return true;
         } catch (Exception e) {
             System.err.println("Error printing receipt: " + e.getMessage());
             e.printStackTrace();
@@ -78,16 +76,6 @@ public class ReceiptPrinter {
         sb.append(line()).append("\n");
 
         return sb.toString();
-    }
-
-    private static TextFlow createReceiptTextFlow(String content) {
-        TextFlow textFlow = new TextFlow();
-        Text text = new Text(content);
-        text.setFont(new Font("Courier New", 8));
-        textFlow.getChildren().add(text);
-        textFlow.setPrefWidth(150);
-        textFlow.setLineSpacing(1);
-        return textFlow;
     }
 
     private static void appendWrapped(StringBuilder sb, String value) {
