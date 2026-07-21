@@ -221,7 +221,7 @@ public class EmployeeDashboardController extends SidebarController {
                             .map(item -> new CartSaleItemCommand(item.getProductId(), item.getQuantity(),
                                     item.getOriginalPrice(), item.getPriceSold()))
                             .toList()));
-            ReceiptPrinter.printReceipt(
+            boolean receiptPrinted = ReceiptPrinter.printReceipt(
                     sessionService.getCurrentDisplayName(),
                     LocalDate.now(),
                     new ArrayList<>(cartItems),
@@ -229,7 +229,11 @@ public class EmployeeDashboardController extends SidebarController {
             cartItems.clear();
             refreshCart();
             refreshProducts();
-            messageLabel.setText("Cart sale saved. Transaction ID: " + saleId);
+            if (receiptPrinted) {
+                messageLabel.setText("Cart sale saved and receipt printed. Transaction ID: " + saleId);
+            } else {
+                messageLabel.setText("Cart sale saved, but receipt did not print. Set the thermal printer as default.");
+            }
         } catch (BusinessException exception) {
             messageLabel.setText(exception.getMessage());
         }
