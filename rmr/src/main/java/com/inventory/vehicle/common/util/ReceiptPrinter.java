@@ -2,10 +2,12 @@ package com.inventory.vehicle.common.util;
 
 import com.inventory.vehicle.dashboard.presentation.EmployeeCartItemRow;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import javax.print.Doc;
 import javax.print.DocFlavor;
 import javax.print.DocPrintJob;
@@ -19,27 +21,57 @@ public class ReceiptPrinter {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final int RECEIPT_WIDTH = 32;
+    private static final String DEFAULT_PRINTER_NAME = "Generic / Text Only";
 
-    public static boolean printReceipt(String employeeName, LocalDate saleDate, List<EmployeeCartItemRow> cartItems,
+    public static PrintResult printReceipt(String employeeName, LocalDate saleDate, List<EmployeeCartItemRow> cartItems,
             Long saleId) {
         try {
             String receiptContent = buildReceiptContent(employeeName, saleDate, cartItems, saleId);
-            PrintService defaultPrinter = PrintServiceLookup.lookupDefaultPrintService();
-            if (defaultPrinter == null) {
-                return false;
+            PrintService printer = findReceiptPrinter();
+            if (printer == null) {
+                return PrintResult.failed("No printer found.");
             }
 
-            DocPrintJob job = defaultPrinter.createPrintJob();
-            DocFlavor flavor = DocFlavor.STRING.TEXT_PLAIN;
-            Doc doc = new SimpleDoc(receiptContent, flavor, null);
+            DocPrintJob job = printer.createPrintJob();
+            DocFlavor flavor = DocFlavor.BYTE_ARRAY.AUTOSENSE;
+            byte[] receiptBytes = normalizeLineEndings(receiptContent).getBytes(StandardCharsets.UTF_8);
+            Doc doc = new SimpleDoc(receiptBytes, flavor, null);
             PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
             job.print(doc, attributes);
-            return true;
+            return PrintResult.printed(printer.getName());
         } catch (Exception e) {
             System.err.println("Error printing receipt: " + e.getMessage());
             e.printStackTrace();
-            return false;
+            return PrintResult.failed(e.getMessage());
         }
+    }
+
+    private static PrintService findReceiptPrinter() {
+        String configuredPrinterName = System.getenv("RECEIPT_PRINTER_NAME");
+        String preferredPrinterName = configuredPrinterName == null || configuredPrinterName.isBlank()
+                ? DEFAULT_PRINTER_NAME
+                : configuredPrinterName.trim();
+
+        PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
+        for (PrintService service : services) {
+            if (printerNamesMatch(service.getName(), preferredPrinterName)) {
+                return service;
+            }
+        }
+
+        return PrintServiceLookup.lookupDefaultPrintService();
+    }
+
+    private static boolean printerNamesMatch(String actualName, String expectedName) {
+        return normalizePrinterName(actualName).equals(normalizePrinterName(expectedName));
+    }
+
+    private static String normalizePrinterName(String value) {
+        return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
+    private static String normalizeLineEndings(String receiptContent) {
+        return receiptContent.replace("\r\n", "\n").replace('\r', '\n').replace("\n", "\r\n") + "\r\n\r\n";
     }
 
     private static String buildReceiptContent(String employeeName, LocalDate saleDate,
@@ -63,19 +95,23 @@ public class ReceiptPrinter {
             if (item.getStockNumber() != null && !item.getStockNumber().isBlank()) {
                 appendWrapped(sb, "Stock #: " + item.getStockNumber());
             }
-            String quantityPrice = item.getQuantity() + " x " + MoneyFormat.peso(item.getPriceSold());
+            String quantityPrice = item.getQuantity() + " x " + printMoney(item.getPriceSold());
             sb.append(padRight(quantityPrice, 18))
-                    .append(padLeft(MoneyFormat.peso(item.getTotalAmount()), 14))
+                    .append(padLeft(printMoney(item.getTotalAmount()), 14))
                     .append("\n\n");
 
             totalAmount = totalAmount.add(item.getTotalAmount());
         }
 
         sb.append(line()).append("\n");
-        sb.append(padRight("TOTAL", 18)).append(padLeft(MoneyFormat.peso(totalAmount), 14)).append("\n");
+        sb.append(padRight("TOTAL", 18)).append(padLeft(printMoney(totalAmount), 14)).append("\n");
         sb.append(line()).append("\n");
 
         return sb.toString();
+    }
+
+    private static String printMoney(BigDecimal amount) {
+        return MoneyFormat.peso(amount).replace("₱", "PHP ");
     }
 
     private static void appendWrapped(StringBuilder sb, String value) {
@@ -125,5 +161,15 @@ public class ReceiptPrinter {
             return value.substring(0, width);
         }
         return " ".repeat(width - value.length()) + value;
+    }
+
+    public record PrintResult(boolean printed, String printerName, String errorMessage) {
+        static PrintResult printed(String printerName) {
+            return new PrintResult(true, printerName, null);
+        }
+
+        static PrintResult failed(String errorMessage) {
+            return new PrintResult(false, null, errorMessage);
+        }
     }
 }

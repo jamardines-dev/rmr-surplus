@@ -15,7 +15,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import javafx.fxml.FXML;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
@@ -221,22 +223,32 @@ public class EmployeeDashboardController extends SidebarController {
                             .map(item -> new CartSaleItemCommand(item.getProductId(), item.getQuantity(),
                                     item.getOriginalPrice(), item.getPriceSold()))
                             .toList()));
-            boolean receiptPrinted = ReceiptPrinter.printReceipt(
-                    sessionService.getCurrentDisplayName(),
-                    LocalDate.now(),
-                    new ArrayList<>(cartItems),
-                    saleId);
+            String employeeName = sessionService.getCurrentDisplayName();
+            LocalDate saleDate = LocalDate.now();
+            List<EmployeeCartItemRow> receiptItems = new ArrayList<>(cartItems);
             cartItems.clear();
             refreshCart();
             refreshProducts();
-            if (receiptPrinted) {
-                messageLabel.setText("Cart sale saved and receipt printed. Transaction ID: " + saleId);
-            } else {
-                messageLabel.setText("Cart sale saved, but receipt did not print. Set the thermal printer as default.");
-            }
+            messageLabel.setText("Cart sale saved. Printing receipt... Transaction ID: " + saleId);
+            CompletableFuture
+                    .supplyAsync(() -> ReceiptPrinter.printReceipt(employeeName, saleDate, receiptItems, saleId))
+                    .thenAccept(printResult -> Platform.runLater(() -> updatePrintStatus(saleId, printResult)));
         } catch (BusinessException exception) {
             messageLabel.setText(exception.getMessage());
         }
+    }
+
+    private void updatePrintStatus(Long saleId, ReceiptPrinter.PrintResult printResult) {
+        if (printResult.printed()) {
+            messageLabel.setText("Cart sale saved and receipt printed to "
+                    + printResult.printerName() + ". Transaction ID: " + saleId);
+            return;
+        }
+
+        String error = printResult.errorMessage() == null || printResult.errorMessage().isBlank()
+                ? "Check Generic / Text Only printer."
+                : printResult.errorMessage();
+        messageLabel.setText("Cart sale saved, but receipt did not print: " + error);
     }
 
     private void refreshProducts() {
