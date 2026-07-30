@@ -48,7 +48,7 @@ Send the `.zip` file to the client. After unzipping, they can open `RMR Inventor
 
 ## Export The Desktop App For Windows
 
-Build this on a Windows computer with JDK 21 installed. The Windows build creates a folder that contains `RMR Inventory.exe`.
+Build this on a Windows computer with JDK 26 installed. The Windows build creates a folder that contains `RMR Inventory.exe`.
 
 Use the same `.env` file in the project root:
 

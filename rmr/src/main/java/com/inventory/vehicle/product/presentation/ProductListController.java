@@ -548,7 +548,7 @@ public class ProductListController extends SidebarController {
                         productImageType[0]);
                 if (restockRows.stream()
                         .anyMatch(existingRow -> existingRow.getModelCode().equalsIgnoreCase(row.getModelCode()))) {
-                    throw new BusinessException("Model is already in this restock.");
+                    throw new BusinessException("This model is already listed in this restock.");
                 }
                 restockRows.add(row);
                 restockErrorLabel.setText("");

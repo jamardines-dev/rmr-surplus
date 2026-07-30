@@ -304,7 +304,7 @@ public class ProductService {
             throw new BusinessException("Model is required.");
         }
         if (productRepository.existsByModelCodeIgnoreCase(command.modelCode().trim())) {
-            throw new BusinessException("Model already exists.");
+            throw new BusinessException("This model is already registered. Use Restock / Add Stock to add quantity to the existing product.");
         }
         if (command.currentStock() < 0) {
             throw new BusinessException("Product stock must never become negative.");
@@ -333,7 +333,7 @@ public class ProductService {
         StockMovement movement = stockMovementRepository.findByIdWithProduct(command.movementId())
                 .orElseThrow(() -> new BusinessException("DR restock line was not found."));
         if (productRepository.existsByModelCodeIgnoreCaseAndIdNot(command.modelCode().trim(), movement.getProduct().getId())) {
-            throw new BusinessException("Model already exists.");
+            throw new BusinessException("This model is already registered on another product.");
         }
         if (command.quantity() <= 0) {
             throw new BusinessException("Restock quantity must be greater than 0.");
@@ -357,7 +357,7 @@ public class ProductService {
             throw new BusinessException("Model is required.");
         }
         if (productRepository.existsByModelCodeIgnoreCaseAndIdNot(command.modelCode().trim(), command.productId())) {
-            throw new BusinessException("Model already exists.");
+            throw new BusinessException("This model is already registered on another product.");
         }
         if (command.currentStock() < 0) {
             throw new BusinessException("Product stock must never become negative.");

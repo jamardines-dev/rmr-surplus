@@ -10,7 +10,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 - **REST Server** (Spring Boot): A centralized backend for data persistence and business logic
 - **PostgreSQL Database**: Shared data store with Flyway migrations
 
-The project uses Java 21, Maven (multi-module), Spring Boot 3.3.5, and JavaFX 21 for the UI framework.
+The project uses Java 26, Maven (multi-module), Spring Boot 4.1.0, and JavaFX 26 for the UI framework.
 
 ## Architecture
 
@@ -129,7 +129,7 @@ export DB_PASSWORD=jamjan08
 #          dist/RMR-Inventory-macos-YYYYMMDD-HHMMSS.zip
 ```
 
-**Build Windows app** (requires Windows + JDK 21):
+**Build Windows app** (requires Windows + JDK 26):
 ```bat
 scripts\build-windows-app.bat
 # Creates: dist\windows-YYYYMMDD-HHMMSS\RMR Inventory\RMR Inventory.exe
