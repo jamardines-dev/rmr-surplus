@@ -265,12 +265,17 @@ public class InventoryController extends SidebarController {
         TextField modelCodeField = new TextField(line.getModelCode());
         TextField quantityField = new TextField(String.valueOf(line.getQuantity()));
         TextField priceField = new TextField(line.getUnitPrice().toPlainString());
+        productField.setDisable(true);
+        brandField.setDisable(true);
+        vehicleTypeField.setDisable(true);
+        modelCodeField.setDisable(true);
+        priceField.setDisable(true);
         Label errorLabel = new Label();
         errorLabel.getStyleClass().add("message");
 
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Edit DR Product");
-        dialog.setHeaderText("Update product details in this DR.");
+        dialog.setTitle("Edit Restock Quantity");
+        dialog.setHeaderText("Adjust the quantity recorded for this DR line.");
         dialog.initOwner(drRestockTable.getScene().getWindow());
         ButtonType saveButtonType = new ButtonType("Save Changes", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
@@ -304,7 +309,7 @@ public class InventoryController extends SidebarController {
                         vehicleTypeField.getText(),
                         modelCodeField.getText(),
                         parseWholeNumber(quantityField.getText(), "Restock quantity"),
-                        parseMoney(priceField.getText())));
+                        line.getUnitPrice()));
                 saved[0] = true;
             } catch (BusinessException | NumberFormatException exception) {
                 event.consume();
@@ -346,21 +351,6 @@ public class InventoryController extends SidebarController {
             return parsedValue;
         } catch (NumberFormatException exception) {
             throw new NumberFormatException(fieldName + " must be a whole number greater than 0.");
-        }
-    }
-
-    private BigDecimal parseMoney(String value) {
-        if (value == null || value.isBlank()) {
-            throw new NumberFormatException("Default price is required.");
-        }
-        try {
-            BigDecimal amount = new BigDecimal(value.trim());
-            if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                throw new NumberFormatException();
-            }
-            return amount;
-        } catch (NumberFormatException exception) {
-            throw new NumberFormatException("Default price must be a valid number.");
         }
     }
 

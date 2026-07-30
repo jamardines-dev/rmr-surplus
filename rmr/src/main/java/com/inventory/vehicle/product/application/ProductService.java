@@ -68,6 +68,18 @@ public class ProductService {
         product.setLastRestockedDate(command.lastRestockedDate());
 
         Product savedProduct = productRepository.save(product);
+        if (command.currentStock() > 0) {
+            StockMovement movement = new StockMovement();
+            movement.setProduct(savedProduct);
+            movement.setMovementType(StockMovementType.RESTOCK);
+            movement.setQuantity(command.currentStock());
+            movement.setPreviousStock(0);
+            movement.setNewStock(command.currentStock());
+            movement.setReason("Initial product stock");
+            movement.setReferenceId(trimToNull(command.drNumber()));
+            movement.setCreatedBy(sessionService.getCurrentUsername());
+            stockMovementRepository.save(movement);
+        }
         auditService.record("CREATE_PRODUCT", "Created product " + savedProduct.getProductName(), sessionService.getCurrentUsername());
         return ProductResultMapper.toResult(savedProduct);
     }
@@ -194,7 +206,9 @@ public class ProductService {
             int previousStock = newProduct ? 0 : product.getCurrentStock();
             int newStock = previousStock + productCommand.currentStock();
 
-            applyRestockDetails(product, productCommand);
+            if (newProduct) {
+                applyRestockDetails(product, productCommand);
+            }
             product.setActive(true);
             product.setCurrentStock(newStock);
             product.setLastRestockedDate(restockedDate);
@@ -238,11 +252,6 @@ public class ProductService {
             throw new BusinessException("Product stock must never become negative.");
         }
 
-        product.setProductName(command.productName().trim());
-        product.setBrand(findOrCreateBrand(command.brandName()));
-        product.setVehicleType(findOrCreateVehicleType(command.vehicleTypeName()));
-        product.setModelCode(command.modelCode().trim());
-        product.setUnitPrice(command.unitPrice());
         product.setCurrentStock(updatedStock);
         productRepository.save(product);
 
@@ -268,13 +277,17 @@ public class ProductService {
         }
 
         Product product = movement.getProduct();
-        product.setActive(false);
+        int updatedStock = product.getCurrentStock() - movement.getQuantity();
+        if (updatedStock < 0) {
+            throw new BusinessException("Cannot delete this restock because product stock would become negative.");
+        }
+        product.setCurrentStock(updatedStock);
         productRepository.save(product);
         stockMovementRepository.delete(movement);
 
         auditService.record(
                 "DELETE_DR_RESTOCK_LINE",
-                "Deleted product " + product.getProductName() + " from DR " + movement.getReferenceId(),
+                "Deleted restock line for " + product.getProductName() + " from DR " + movement.getReferenceId(),
                 sessionService.getCurrentUsername());
     }
 
@@ -340,28 +353,8 @@ public class ProductService {
         if (command.movementId() == null) {
             throw new BusinessException("DR restock line is required.");
         }
-        if (command.productName() == null || command.productName().isBlank()) {
-            throw new BusinessException("Product name is required.");
-        }
-        if (command.brandName() == null || command.brandName().isBlank()) {
-            throw new BusinessException("Brand is required.");
-        }
-        if (command.vehicleTypeName() == null || command.vehicleTypeName().isBlank()) {
-            throw new BusinessException("Vehicle is required.");
-        }
-        if (command.modelCode() == null || command.modelCode().isBlank()) {
-            throw new BusinessException("Model is required.");
-        }
-        StockMovement movement = stockMovementRepository.findByIdWithProduct(command.movementId())
-                .orElseThrow(() -> new BusinessException("DR restock line was not found."));
-        if (productRepository.existsByModelCodeIgnoreCaseAndIdNot(command.modelCode().trim(), movement.getProduct().getId())) {
-            throw new BusinessException("This model is already registered on another product.");
-        }
         if (command.quantity() <= 0) {
             throw new BusinessException("Restock quantity must be greater than 0.");
-        }
-        if (command.unitPrice() == null || command.unitPrice().compareTo(BigDecimal.ZERO) < 0) {
-            throw new BusinessException("Price must not be negative.");
         }
     }
 

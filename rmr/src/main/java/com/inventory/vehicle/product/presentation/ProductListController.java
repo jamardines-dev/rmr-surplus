@@ -407,7 +407,7 @@ public class ProductListController extends SidebarController {
         dialog.getDialogPane().getButtonTypes().addAll(applyButtonType, ButtonType.CANCEL);
 
         DatePicker restockedDatePicker = new DatePicker(LocalDate.now());
-        Button addProductButton = new Button("Add New Product");
+        Button addProductButton = new Button("Add Restock Item");
         Button removeProductButton = new Button("Remove Selected");
         removeProductButton.getStyleClass().add("secondary");
         Label restockErrorLabel = new Label();
@@ -502,8 +502,8 @@ public class ProductListController extends SidebarController {
         productErrorLabel.getStyleClass().add("message");
 
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Add New Product");
-        dialog.setHeaderText("Add one new product with its DR number.");
+        dialog.setTitle("Add Restock Item");
+        dialog.setHeaderText("Enter a new product or an existing model to add stock.");
         dialog.initOwner(productTable.getScene().getWindow());
 
         ButtonType addButtonType = new ButtonType("Save Product", ButtonBar.ButtonData.OK_DONE);

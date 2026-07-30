@@ -56,8 +56,8 @@
                         <TableColumn fx:id="modelCodeColumn" prefWidth="130" text="Model"/>
                         <TableColumn fx:id="stockColumn" prefWidth="90" text="Stock"/>
                         <TableColumn fx:id="priceColumn" prefWidth="130" text="Default Price"/>
-                        <TableColumn fx:id="restockedColumn" prefWidth="130" text="Restocked"/>
-                        <TableColumn fx:id="drNumberColumn" prefWidth="130" text="Stock Number"/>
+                        <TableColumn fx:id="restockedColumn" prefWidth="130" text="Last Restocked"/>
+                        <TableColumn fx:id="drNumberColumn" prefWidth="130" text="Latest Stock No."/>
                     </columns>
                 </TableView>
             </VBox>
