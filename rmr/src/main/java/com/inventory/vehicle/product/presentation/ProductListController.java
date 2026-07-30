@@ -449,7 +449,7 @@ public class ProductListController extends SidebarController {
                         restockedDatePicker.getValue(),
                         products));
                 refreshProducts();
-                messageLabel.setText("Created and restocked " + products.size() + " new product(s).");
+                messageLabel.setText("Applied restock for " + products.size() + " product row(s).");
             } catch (BusinessException | NumberFormatException exception) {
                 event.consume();
                 restockErrorLabel.setText(exception.getMessage());
@@ -546,10 +546,6 @@ public class ProductListController extends SidebarController {
                         priceField.getText(),
                         productImage[0],
                         productImageType[0]);
-                if (restockRows.stream()
-                        .anyMatch(existingRow -> existingRow.getModelCode().equalsIgnoreCase(row.getModelCode()))) {
-                    throw new BusinessException("This model is already listed in this restock.");
-                }
                 restockRows.add(row);
                 restockErrorLabel.setText("");
             } catch (BusinessException | NumberFormatException exception) {

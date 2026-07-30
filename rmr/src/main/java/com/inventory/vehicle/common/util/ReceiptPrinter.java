@@ -78,7 +78,7 @@ public class ReceiptPrinter {
             List<EmployeeCartItemRow> cartItems, Long saleId) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(center("RMR SURPLUS")).append("\n");
+        sb.append(center("R.M.R AUTO PARTS AND ACCESSORIES SHOP")).append("\n");
         sb.append(center("SALES RECEIPT")).append("\n\n");
 
         sb.append("Transaction: ").append(saleId).append("\n");

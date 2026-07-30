@@ -11,6 +11,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByActiveTrueOrderByProductNameAsc();
 
+    Optional<Product> findByModelCodeIgnoreCase(String modelCode);
+
     boolean existsByModelCodeIgnoreCase(String modelCode);
 
     boolean existsByModelCodeIgnoreCaseAndIdNot(String modelCode, Long id);
