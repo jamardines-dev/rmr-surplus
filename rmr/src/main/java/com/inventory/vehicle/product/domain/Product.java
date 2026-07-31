@@ -24,6 +24,8 @@ import java.util.List;
 @Table(name = "products")
 public class Product {
 
+    private static final int MAX_IMAGES = 6;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -136,8 +138,8 @@ public class Product {
     }
 
     public void addImage(byte[] data, String type) {
-        if (images.size() >= 4) {
-            throw new IllegalArgumentException("Cannot add more than 4 images per product.");
+        if (images.size() >= MAX_IMAGES) {
+            throw new IllegalArgumentException("Cannot add more than " + MAX_IMAGES + " images per product.");
         }
         ProductImage image = new ProductImage(this, data, type, images.size());
         images.add(image);

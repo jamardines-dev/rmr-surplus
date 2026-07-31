@@ -49,6 +49,8 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class ProductListController extends SidebarController {
 
+    private static final int MAX_PRODUCT_IMAGES = 6;
+
     private final ProductQueryService productQueryService;
     private final ProductService productService;
     private List<ProductTableRow> allProducts = List.of();
@@ -248,8 +250,8 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private void chooseProductImage() {
-        if (selectedImages.size() >= 4) {
-            messageLabel.setText("Maximum 4 images allowed. Remove an image to add another.");
+        if (selectedImages.size() >= MAX_PRODUCT_IMAGES) {
+            messageLabel.setText("Maximum " + MAX_PRODUCT_IMAGES + " images allowed. Remove an image to add another.");
             return;
         }
 
@@ -271,9 +273,10 @@ public class ProductListController extends SidebarController {
             String imageType = Files.probeContentType(file.toPath());
             selectedImages.add(new NewProductImage(imageData, imageType));
             productImageView.setImage(new Image(file.toURI().toString()));
-            imageNameLabel.setText("(" + selectedImages.size() + "/4 images) " + file.getName());
+            imageNameLabel.setText("(" + selectedImages.size() + "/" + MAX_PRODUCT_IMAGES + " images) " + file.getName());
             messageLabel.setText(
-                    "Photo " + selectedImages.size() + " added. " + (4 - selectedImages.size()) + " more allowed.");
+                    "Photo " + selectedImages.size() + " added. "
+                            + (MAX_PRODUCT_IMAGES - selectedImages.size()) + " more allowed.");
         } catch (IOException exception) {
             messageLabel.setText("Could not load product photo.");
         }
@@ -285,9 +288,10 @@ public class ProductListController extends SidebarController {
             selectedImages.remove(selectedImages.size() - 1);
             productImageView.setImage(null);
             imageNameLabel.setText(
-                    selectedImages.isEmpty() ? "No photo selected" : "(" + selectedImages.size() + "/4 images)");
+                    selectedImages.isEmpty() ? "No photo selected"
+                            : "(" + selectedImages.size() + "/" + MAX_PRODUCT_IMAGES + " images)");
             messageLabel.setText(selectedImages.isEmpty() ? "Photo removed."
-                    : "Photo removed. " + (4 - selectedImages.size()) + " more allowed.");
+                    : "Photo removed. " + (MAX_PRODUCT_IMAGES - selectedImages.size()) + " more allowed.");
         }
     }
 

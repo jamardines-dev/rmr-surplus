@@ -1,4 +1,4 @@
-package com.inventory.vehicle.dashboard.presentation;
+ package com.inventory.vehicle.dashboard.presentation;
 
 import com.inventory.vehicle.sales.application.EmployeeSalesSummary;
 import java.math.BigDecimal;

@@ -18,6 +18,7 @@ public class SceneManager {
     private final ViewLoader viewLoader;
     private final SessionService sessionService;
     private Stage stage;
+    private boolean stageConfigured;
 
     public SceneManager(ViewLoader viewLoader, SessionService sessionService) {
         this.viewLoader = viewLoader;
@@ -37,15 +38,26 @@ public class SceneManager {
 
         stage.setTitle("RMR SURPLUS - " + view.getTitle());
         stage.setScene(scene);
+        stage.setMinWidth(1024);
+        stage.setMinHeight(700);
+
+        if (!stageConfigured) {
+            configureInitialStage();
+            stageConfigured = true;
+        }
+
+        if (!stage.isShowing()) {
+            stage.show();
+        }
+    }
+
+    private void configureInitialStage() {
         Rectangle2D bounds = getCurrentScreenBounds();
         stage.setX(bounds.getMinX());
         stage.setY(bounds.getMinY());
-        stage.setMinWidth(Math.min(1024, bounds.getWidth()));
-        stage.setMinHeight(Math.min(700, bounds.getHeight()));
         stage.setWidth(bounds.getWidth());
         stage.setHeight(bounds.getHeight());
         stage.setMaximized(true);
-        stage.show();
     }
 
     private void makeContentScrollable(Parent root) {
@@ -67,6 +79,10 @@ public class SceneManager {
     }
 
     private Rectangle2D getCurrentScreenBounds() {
+        if (Double.isNaN(stage.getX()) || Double.isNaN(stage.getY())) {
+            return Screen.getPrimary().getVisualBounds();
+        }
+
         return Screen.getScreensForRectangle(stage.getX(), stage.getY(), 1, 1)
                 .stream()
                 .findFirst()
