@@ -74,12 +74,12 @@ Database migrations use Flyway versioning (V1–V9+) located in `src/main/resour
 
 1. **Set environment variables** in `.env` file in project root:
    ```
-   DB_URL=jdbc:postgresql://localhost:5432/rmrdb
+   DB_URL=jdbc:postgresql://localhost:5432/inventory_db
    DB_USERNAME=postgres
    DB_PASSWORD=<your_password>
    ```
 
-2. **Ensure PostgreSQL is running** locally on port 5432 with a database named `rmrdb`.
+2. **Ensure PostgreSQL is running** locally on port 5432 with a database named `inventory_db`.
 
 ### Build & Run
 
