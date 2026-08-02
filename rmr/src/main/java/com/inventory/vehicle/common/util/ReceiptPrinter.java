@@ -80,6 +80,7 @@ public class ReceiptPrinter {
 
         sb.append(center("R.M.R AUTO PARTS AND ACCESSORIES SHOP")).append("\n");
         sb.append(center("Guituan, Ipil, Zamboanga Sibugay")).append("\n");
+        sb.append(center("Contact No. 0975 336 5308")).append("\n");
         sb.append(center("SALES RECEIPT")).append("\n\n");
 
         sb.append("Transaction: ").append(saleId).append("\n");
