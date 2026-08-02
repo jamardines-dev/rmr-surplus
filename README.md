@@ -28,7 +28,7 @@ The root project is a Maven parent project. The JavaFX plugin is configured insi
 Create a `.env` file in the project root before packaging:
 
 ```sh
-DB_URL=jdbc:postgresql://localhost:5432/inventory_db
+DB_URL=jdbc:postgresql://localhost:5432/rmrdb
 DB_USERNAME=postgres
 DB_PASSWORD=your_database_password
 ```
@@ -53,7 +53,7 @@ Build this on a Windows computer with JDK 26 installed. The Windows build create
 Use the same `.env` file in the project root:
 
 ```sh
-DB_URL=jdbc:postgresql://localhost:5432/inventory_db
+DB_URL=jdbc:postgresql://localhost:5432/rmrdb
 DB_USERNAME=postgres
 DB_PASSWORD=your_database_password
 ```
