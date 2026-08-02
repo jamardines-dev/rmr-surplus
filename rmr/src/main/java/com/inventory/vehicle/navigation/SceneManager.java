@@ -38,8 +38,6 @@ public class SceneManager {
 
         stage.setTitle("RMR SURPLUS - " + view.getTitle());
         stage.setScene(scene);
-        stage.setMinWidth(1024);
-        stage.setMinHeight(700);
 
         if (!stageConfigured) {
             configureInitialStage();
@@ -53,6 +51,8 @@ public class SceneManager {
 
     private void configureInitialStage() {
         Rectangle2D bounds = getCurrentScreenBounds();
+        stage.setMinWidth(Math.min(760, bounds.getWidth()));
+        stage.setMinHeight(Math.min(520, bounds.getHeight()));
         stage.setX(bounds.getMinX());
         stage.setY(bounds.getMinY());
         stage.setWidth(bounds.getWidth());

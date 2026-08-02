@@ -33,6 +33,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -44,6 +45,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
+import javafx.stage.Window;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -149,6 +152,8 @@ public class ProductListController extends SidebarController {
         restockedColumn.setCellValueFactory(new PropertyValueFactory<>("lastRestockedDateText"));
         drNumberColumn.setCellValueFactory(new PropertyValueFactory<>("lastDrNumber"));
         productTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        productTable.setMaxHeight(Double.MAX_VALUE);
+        productTable.setMaxWidth(Double.MAX_VALUE);
 
         productTable.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, selectedProduct) -> {
             if (selectedProduct != null) {
@@ -440,8 +445,8 @@ public class ProductListController extends SidebarController {
         addProductRow.getChildren().addAll(addProductButton, removeProductButton);
         content.getChildren().addAll(restockMeta, addProductRow, restockTable, restockErrorLabel);
         dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().setPrefWidth(860);
-        dialog.getDialogPane().setPrefHeight(600);
+        sizeDialogToScreen(dialog, 860, 640);
+        dialog.setResizable(true);
 
         Button applyButton = (Button) dialog.getDialogPane().lookupButton(applyButtonType);
         applyButton.addEventFilter(ActionEvent.ACTION, event -> {
@@ -534,8 +539,13 @@ public class ProductListController extends SidebarController {
                 labeledField("Stock Number", drNumberField),
                 quantityPriceRow,
                 productErrorLabel);
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().setPrefWidth(540);
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.getStyleClass().add("content-scroll");
+        dialog.getDialogPane().setContent(scrollPane);
+        sizeDialogToScreen(dialog, 540, 620);
+        dialog.setResizable(true);
 
         Button addButton = (Button) dialog.getDialogPane().lookupButton(addButtonType);
         addButton.addEventFilter(ActionEvent.ACTION, event -> {
@@ -592,7 +602,9 @@ public class ProductListController extends SidebarController {
     private TableView<RestockProductRow> createRestockTable() {
         TableView<RestockProductRow> restockTable = new TableView<>();
         restockTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        restockTable.setPrefHeight(390);
+        restockTable.setMinHeight(220);
+        restockTable.setPrefHeight(460);
+        VBox.setVgrow(restockTable, Priority.ALWAYS);
 
         TableColumn<RestockProductRow, Image> photoColumn = new TableColumn<>("Photo");
         photoColumn.setCellValueFactory(data -> new ReadOnlyObjectWrapper<>(data.getValue().getImage()));
@@ -632,6 +644,17 @@ public class ProductListController extends SidebarController {
         restockTable.getColumns().add(quantityColumn);
         restockTable.getColumns().add(priceColumn);
         return restockTable;
+    }
+
+    private void sizeDialogToScreen(Dialog<?> dialog, double preferredWidth, double preferredHeight) {
+        Window owner = productTable.getScene().getWindow();
+        var bounds = Screen.getScreensForRectangle(owner.getX(), owner.getY(), owner.getWidth(), owner.getHeight())
+                .stream()
+                .findFirst()
+                .orElse(Screen.getPrimary())
+                .getVisualBounds();
+        dialog.getDialogPane().setPrefWidth(Math.min(preferredWidth, bounds.getWidth() - 80));
+        dialog.getDialogPane().setPrefHeight(Math.min(preferredHeight, bounds.getHeight() - 80));
     }
 
     private boolean confirm(String title, String message) {

@@ -44,9 +44,9 @@
                 </HBox>
             </HBox>
 
-            <VBox spacing="10" styleClass="section" VBox.vgrow="ALWAYS">
+            <VBox maxHeight="Infinity" spacing="10" styleClass="section" VBox.vgrow="ALWAYS">
                 <Label text="Product List" styleClass="section-title"/>
-                <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
+                <TableView fx:id="productTable" maxHeight="Infinity" maxWidth="Infinity" VBox.vgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="imageColumn" prefWidth="80" text="Photo"/>
                         <TableColumn fx:id="idColumn" prefWidth="60" text="ID"/>
