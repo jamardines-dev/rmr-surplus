@@ -54,6 +54,7 @@
                         <TableColumn fx:id="brandColumn" prefWidth="150" text="Brand"/>
                         <TableColumn fx:id="vehicleTypeColumn" prefWidth="160" text="Vehicle"/>
                         <TableColumn fx:id="modelCodeColumn" prefWidth="130" text="Model"/>
+                        <TableColumn fx:id="productLocationColumn" prefWidth="130" text="Location"/>
                         <TableColumn fx:id="stockColumn" prefWidth="90" text="Stock"/>
                         <TableColumn fx:id="priceColumn" prefWidth="130" text="Default Price"/>
                         <TableColumn fx:id="restockedColumn" prefWidth="130" text="Last Restocked"/>

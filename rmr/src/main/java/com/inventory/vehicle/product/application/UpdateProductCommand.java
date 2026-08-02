@@ -10,6 +10,7 @@ public record UpdateProductCommand(
         String brandName,
         String vehicleTypeName,
         String modelCode,
+        String productLocation,
         int currentStock,
         BigDecimal unitPrice,
         List<Long> removedImageIds,

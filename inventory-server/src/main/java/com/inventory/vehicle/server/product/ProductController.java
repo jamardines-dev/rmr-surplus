@@ -64,6 +64,7 @@ public class ProductController {
                 brand,
                 vehicleType,
                 request.modelCode().trim(),
+                trimToNull(request.productLocation()),
                 request.currentStock(),
                 request.unitPrice()
         );
@@ -87,6 +88,7 @@ public class ProductController {
                 brand,
                 vehicleType,
                 request.modelCode().trim(),
+                trimToNull(request.productLocation()),
                 request.unitPrice(),
                 request.active()
         );
@@ -101,7 +103,11 @@ public class ProductController {
         var user = currentUser.requireRole(Role.ADMIN);
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found."));
-        product.updateDetails(product.getProductName(), product.getBrand(), product.getVehicleType(), product.getModelCode(), product.getUnitPrice(), false);
+        product.updateDetails(product.getProductName(), product.getBrand(), product.getVehicleType(), product.getModelCode(), product.getProductLocation(), product.getUnitPrice(), false);
         auditService.record("PRODUCT_DEACTIVATED", "Deactivated product " + product.getModelCode(), user.getUsername());
+    }
+
+    private String trimToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

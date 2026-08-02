@@ -10,6 +10,7 @@ public record ProductResult(
         String brandName,
         String vehicleTypeName,
         String modelCode,
+        String productLocation,
         int currentStock,
         BigDecimal unitPrice,
         List<ProductImageResult> images,

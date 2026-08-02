@@ -11,6 +11,7 @@ public class EmployeeCartItemRow {
     private final String vehicleTypeName;
     private final String modelCode;
     private final String stockNumber;
+    private final String productLocation;
     private final BigDecimal originalPrice;
     private int quantity;
     private BigDecimal priceSold;
@@ -22,6 +23,7 @@ public class EmployeeCartItemRow {
         this.vehicleTypeName = product.getVehicleTypeName();
         this.modelCode = product.getModelCode();
         this.stockNumber = product.getLastDrNumber();
+        this.productLocation = product.getProductLocation();
         this.originalPrice = priceSold;
         this.quantity = quantity;
         this.priceSold = priceSold;
@@ -49,6 +51,10 @@ public class EmployeeCartItemRow {
 
     public String getStockNumber() {
         return stockNumber;
+    }
+
+    public String getProductLocation() {
+        return productLocation == null ? "" : productLocation;
     }
 
     public int getQuantity() {

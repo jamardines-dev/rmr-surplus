@@ -9,6 +9,7 @@ public record CreateProductCommand(
         String brandName,
         String vehicleTypeName,
         String modelCode,
+        String productLocation,
         int currentStock,
         BigDecimal unitPrice,
         List<NewProductImage> images,

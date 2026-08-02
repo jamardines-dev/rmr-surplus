@@ -42,6 +42,9 @@ public class Product {
     @Column(nullable = false, unique = true)
     private String modelCode;
 
+    @Column(length = 120)
+    private String productLocation;
+
     @Column(nullable = false)
     private int currentStock;
 
@@ -66,11 +69,12 @@ public class Product {
     protected Product() {
     }
 
-    public Product(String productName, Brand brand, VehicleType vehicleType, String modelCode, int currentStock, BigDecimal unitPrice) {
+    public Product(String productName, Brand brand, VehicleType vehicleType, String modelCode, String productLocation, int currentStock, BigDecimal unitPrice) {
         this.productName = productName;
         this.brand = brand;
         this.vehicleType = vehicleType;
         this.modelCode = modelCode;
+        this.productLocation = productLocation;
         this.currentStock = currentStock;
         this.unitPrice = unitPrice;
         this.active = true;
@@ -98,6 +102,10 @@ public class Product {
         return modelCode;
     }
 
+    public String getProductLocation() {
+        return productLocation;
+    }
+
     public int getCurrentStock() {
         return currentStock;
     }
@@ -110,11 +118,12 @@ public class Product {
         return active;
     }
 
-    public void updateDetails(String productName, Brand brand, VehicleType vehicleType, String modelCode, BigDecimal unitPrice, boolean active) {
+    public void updateDetails(String productName, Brand brand, VehicleType vehicleType, String modelCode, String productLocation, BigDecimal unitPrice, boolean active) {
         this.productName = productName;
         this.brand = brand;
         this.vehicleType = vehicleType;
         this.modelCode = modelCode;
+        this.productLocation = productLocation;
         this.unitPrice = unitPrice;
         this.active = active;
         this.updatedAt = LocalDateTime.now();

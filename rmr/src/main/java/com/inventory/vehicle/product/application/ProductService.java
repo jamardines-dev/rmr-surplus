@@ -58,6 +58,7 @@ public class ProductService {
         product.setBrand(brand);
         product.setVehicleType(vehicleType);
         product.setModelCode(command.modelCode().trim());
+        product.setProductLocation(trimToNull(command.productLocation()));
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
         if (command.images() != null) {
@@ -96,6 +97,7 @@ public class ProductService {
         product.setBrand(findOrCreateBrand(command.brandName()));
         product.setVehicleType(findOrCreateVehicleType(command.vehicleTypeName()));
         product.setModelCode(command.modelCode().trim());
+        product.setProductLocation(trimToNull(command.productLocation()));
         product.setCurrentStock(command.currentStock());
         product.setUnitPrice(command.unitPrice());
 
@@ -341,6 +343,7 @@ public class ProductService {
         product.setBrand(findOrCreateBrand(command.brandName()));
         product.setVehicleType(findOrCreateVehicleType(command.vehicleTypeName()));
         product.setModelCode(command.modelCode().trim());
+        product.setProductLocation(trimToNull(command.productLocation()));
         product.setUnitPrice(command.unitPrice());
         if (command.images() != null) {
             for (NewProductImage img : command.images()) {

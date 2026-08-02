@@ -21,12 +21,17 @@ final class ProductResultMapper {
                         img.getSortOrder()))
                 .toList();
 
+        return toResult(product, lastDrNumber, images);
+    }
+
+    static ProductResult toResult(Product product, String lastDrNumber, List<ProductImageResult> images) {
         return new ProductResult(
                 product.getId(),
                 product.getProductName(),
                 product.getBrand().getName(),
                 product.getVehicleType().getName(),
                 product.getModelCode(),
+                product.getProductLocation(),
                 product.getCurrentStock(),
                 product.getUnitPrice(),
                 images,

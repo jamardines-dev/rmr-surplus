@@ -71,6 +71,9 @@ public class EmployeeDashboardController extends SidebarController {
     private TableColumn<EmployeeCartItemRow, String> cartStockNumberColumn;
 
     @FXML
+    private TableColumn<EmployeeCartItemRow, String> cartProductLocationColumn;
+
+    @FXML
     private TableColumn<EmployeeCartItemRow, Integer> cartQuantityColumn;
 
     @FXML
@@ -103,6 +106,7 @@ public class EmployeeDashboardController extends SidebarController {
         cartProductColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
         cartModelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
         cartStockNumberColumn.setCellValueFactory(new PropertyValueFactory<>("stockNumber"));
+        cartProductLocationColumn.setCellValueFactory(new PropertyValueFactory<>("productLocation"));
         cartQuantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         cartOriginalPriceColumn.setCellValueFactory(new PropertyValueFactory<>("originalPrice"));
         cartPriceColumn.setCellValueFactory(new PropertyValueFactory<>("priceSold"));
@@ -299,7 +303,8 @@ public class EmployeeDashboardController extends SidebarController {
                 .filter(product -> contains(product.getProductName(), normalizedSearch)
                         || contains(product.getBrandName(), normalizedSearch)
                         || contains(product.getVehicleTypeName(), normalizedSearch)
-                        || contains(product.getModelCode(), normalizedSearch))
+                        || contains(product.getModelCode(), normalizedSearch)
+                        || contains(product.getProductLocation(), normalizedSearch))
                 .toList();
     }
 
@@ -310,7 +315,8 @@ public class EmployeeDashboardController extends SidebarController {
     }
 
     private VBox createProductCard(ProductTableRow product) {
-        ImageView productImage = new ImageView(product.getImage());
+        Image image = product.getImage();
+        ImageView productImage = new ImageView(image);
         productImage.setFitHeight(96);
         productImage.setFitWidth(140);
         productImage.setPreserveRatio(true);
@@ -321,7 +327,7 @@ public class EmployeeDashboardController extends SidebarController {
             event.consume();
         });
 
-        Label photoPlaceholder = new Label(product.getImage() == null ? "No Photo" : "");
+        Label photoPlaceholder = new Label(image == null ? "No Photo" : "");
         photoPlaceholder.getStyleClass().add("product-card-placeholder");
 
         VBox imageBox = new VBox(productImage, photoPlaceholder);
@@ -341,6 +347,8 @@ public class EmployeeDashboardController extends SidebarController {
 
         Label drLabel = new Label(product.getLastDrNumber().isEmpty() ? "" : "DR: " + product.getLastDrNumber());
         drLabel.getStyleClass().add("field-label");
+        Label locationLabel = new Label(product.getProductLocation().isEmpty() ? "" : "Loc: " + product.getProductLocation());
+        locationLabel.getStyleClass().add("field-label");
 
         Label priceLabel = new Label(MoneyFormat.peso(product.getUnitPrice()));
         priceLabel.getStyleClass().add("summary-value-small");
@@ -367,7 +375,7 @@ public class EmployeeDashboardController extends SidebarController {
         cartControls.setAlignment(Pos.CENTER_LEFT);
         cartControls.setOnMouseClicked(event -> event.consume());
 
-        VBox card = new VBox(8, imageBox, nameLabel, metaLabel, new HBox(10, stockLabel, drLabel), new HBox(10, priceLabel), cartControls);
+        VBox card = new VBox(8, imageBox, nameLabel, metaLabel, new HBox(10, stockLabel, drLabel), locationLabel, new HBox(10, priceLabel), cartControls);
         card.setPadding(new Insets(12));
         card.setPrefWidth(210);
         card.setMinHeight(260);
@@ -419,13 +427,14 @@ public class EmployeeDashboardController extends SidebarController {
     }
 
     private void openProductDetails(ProductTableRow product) {
-        Image image = product.getImage();
+        ProductTableRow fullProduct = new ProductTableRow(productQueryService.findProduct(product.getId()));
+        Image image = fullProduct.getImage();
         TilePane imagePane = new TilePane();
         imagePane.setHgap(10);
         imagePane.setVgap(10);
         imagePane.setPrefColumns(3);
         imagePane.setAlignment(Pos.CENTER);
-        product.getImages().forEach(productImage -> {
+        fullProduct.getImages().forEach(productImage -> {
             ImageView imageView = new ImageView(productImage);
             imageView.setFitWidth(150);
             imageView.setFitHeight(112);
@@ -433,7 +442,7 @@ public class EmployeeDashboardController extends SidebarController {
             imageView.setPickOnBounds(true);
             imageView.getStyleClass().add("product-image-preview");
             imageView.setOnMouseClicked(event -> {
-                openProductImage(product.getProductName(), productImage);
+                openProductImage(fullProduct.getProductName(), productImage);
                 event.consume();
             });
             imagePane.getChildren().add(imageView);
@@ -449,13 +458,14 @@ public class EmployeeDashboardController extends SidebarController {
         GridPane details = new GridPane();
         details.setHgap(18);
         details.setVgap(10);
-        addDetail(details, 0, 0, "Product", product.getProductName());
-        addDetail(details, 1, 0, "Brand", product.getBrandName());
-        addDetail(details, 0, 1, "Type", product.getVehicleTypeName());
-        addDetail(details, 1, 1, "Model", product.getModelCode());
-        addDetail(details, 0, 2, "Stock", String.valueOf(product.getCurrentStock()));
-        addDetail(details, 1, 2, "DR Number", product.getLastDrNumber().isEmpty() ? "-" : product.getLastDrNumber());
-        addDetail(details, 0, 3, "Default Price", MoneyFormat.peso(product.getUnitPrice()));
+        addDetail(details, 0, 0, "Product", fullProduct.getProductName());
+        addDetail(details, 1, 0, "Brand", fullProduct.getBrandName());
+        addDetail(details, 0, 1, "Type", fullProduct.getVehicleTypeName());
+        addDetail(details, 1, 1, "Model", fullProduct.getModelCode());
+        addDetail(details, 0, 2, "Stock", String.valueOf(fullProduct.getCurrentStock()));
+        addDetail(details, 1, 2, "DR Number", fullProduct.getLastDrNumber().isEmpty() ? "-" : fullProduct.getLastDrNumber());
+        addDetail(details, 0, 3, "Location", fullProduct.getProductLocation());
+        addDetail(details, 1, 3, "Default Price", MoneyFormat.peso(fullProduct.getUnitPrice()));
 
         ScrollPane contentScroll = new ScrollPane(new VBox(14, photoBox, details));
         contentScroll.setFitToWidth(true);
@@ -464,7 +474,7 @@ public class EmployeeDashboardController extends SidebarController {
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Product Details");
-        dialog.setHeaderText(product.getProductName());
+        dialog.setHeaderText(fullProduct.getProductName());
         dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
         dialog.getDialogPane().setContent(contentScroll);
         dialog.getDialogPane().setPrefWidth(620);

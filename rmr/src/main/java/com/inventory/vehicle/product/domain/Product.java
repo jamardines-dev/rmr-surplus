@@ -44,6 +44,9 @@ public class Product {
     @Column(nullable = false, unique = true, length = 100)
     private String modelCode;
 
+    @Column(length = 120)
+    private String productLocation;
+
     @Column(nullable = false)
     private int currentStock;
 
@@ -111,6 +114,14 @@ public class Product {
 
     public void setModelCode(String modelCode) {
         this.modelCode = modelCode;
+    }
+
+    public String getProductLocation() {
+        return productLocation;
+    }
+
+    public void setProductLocation(String productLocation) {
+        this.productLocation = productLocation;
     }
 
     public int getCurrentStock() {

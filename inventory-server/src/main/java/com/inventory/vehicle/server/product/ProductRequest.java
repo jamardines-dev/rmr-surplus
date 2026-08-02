@@ -11,6 +11,7 @@ public record ProductRequest(
         @NotBlank String brand,
         @NotBlank String vehicleType,
         @NotBlank String modelCode,
+        String productLocation,
         @Min(0) int currentStock,
         @NotNull @DecimalMin("0.00") BigDecimal unitPrice,
         boolean active

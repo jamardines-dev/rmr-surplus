@@ -39,7 +39,7 @@
                     <HBox spacing="10" styleClass="toolbar">
                         <TextField fx:id="searchField"
                                    onAction="#searchProduct"
-                                   promptText="Search product, brand, Vehicle, or Model"
+                                   promptText="Search product, brand, vehicle, model, or location"
                                    HBox.hgrow="ALWAYS"/>
                         <Button onAction="#searchProduct" text="Search"/>
                         <Button onAction="#clearSearch" styleClass="secondary" text="Clear"/>
@@ -66,6 +66,7 @@
                                 <TableColumn fx:id="cartProductColumn" prefWidth="120" text="Product"/>
                                 <TableColumn fx:id="cartModelCodeColumn" prefWidth="70" text="Model"/>
                                 <TableColumn fx:id="cartStockNumberColumn" prefWidth="70" text="Stock#"/>
+                                <TableColumn fx:id="cartProductLocationColumn" prefWidth="80" text="Location"/>
                                 <TableColumn fx:id="cartQuantityColumn" prefWidth="50" text="Qty"/>
                                 <TableColumn fx:id="cartOriginalPriceColumn" prefWidth="75" text="Original"/>
                                 <TableColumn fx:id="cartPriceColumn" prefWidth="75" text="Edited"/>

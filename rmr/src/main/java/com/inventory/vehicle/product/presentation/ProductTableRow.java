@@ -10,17 +10,26 @@ import javafx.scene.image.Image;
 
 public class ProductTableRow {
 
+    private static final double THUMBNAIL_WIDTH = 180;
+    private static final double THUMBNAIL_HEIGHT = 140;
+    private static final double DETAIL_IMAGE_WIDTH = 900;
+    private static final double DETAIL_IMAGE_HEIGHT = 700;
+
     private final Long id;
     private final String productName;
     private final String brandName;
     private final String vehicleTypeName;
     private final String modelCode;
+    private final String productLocation;
     private final int currentStock;
     private final BigDecimal unitPrice;
     private final List<ProductImageResult> images;
     private final LocalDate lastRestockedDate;
     private final String lastDrNumber;
     private final boolean active;
+    private Image thumbnailImage;
+    private boolean thumbnailLoaded;
+    private List<Image> detailImages;
 
     public ProductTableRow(ProductResult product) {
         this.id = product.id();
@@ -28,6 +37,7 @@ public class ProductTableRow {
         this.brandName = product.brandName();
         this.vehicleTypeName = product.vehicleTypeName();
         this.modelCode = product.modelCode();
+        this.productLocation = product.productLocation();
         this.currentStock = product.currentStock();
         this.unitPrice = product.unitPrice();
         this.images = product.images();
@@ -56,6 +66,10 @@ public class ProductTableRow {
         return modelCode;
     }
 
+    public String getProductLocation() {
+        return productLocation == null ? "" : productLocation;
+    }
+
     public int getCurrentStock() {
         return currentStock;
     }
@@ -77,19 +91,28 @@ public class ProductTableRow {
     }
 
     public Image getImage() {
-        List<Image> productImages = getImages();
-        return productImages.isEmpty() ? null : productImages.get(0);
+        if (!thumbnailLoaded) {
+            thumbnailImage = firstImageResult()
+                    .map(ProductTableRow::toThumbnailImage)
+                    .orElse(null);
+            thumbnailLoaded = true;
+        }
+        return thumbnailImage;
     }
 
     public List<Image> getImages() {
-        if (images == null || images.isEmpty()) {
-            return List.of();
+        if (detailImages == null) {
+            if (images == null || images.isEmpty()) {
+                detailImages = List.of();
+            } else {
+                detailImages = images.stream()
+                        .map(ProductImageResult::imageData)
+                        .filter(ProductTableRow::hasImageData)
+                        .map(ProductTableRow::toDetailImage)
+                        .toList();
+            }
         }
-        return images.stream()
-                .map(ProductImageResult::imageData)
-                .filter(imageData -> imageData != null && imageData.length > 0)
-                .map(imageData -> new Image(new ByteArrayInputStream(imageData)))
-                .toList();
+        return detailImages;
     }
 
     public List<ProductImageResult> getImageResults() {
@@ -98,6 +121,31 @@ public class ProductTableRow {
 
     public boolean isActive() {
         return active;
+    }
+
+    private java.util.Optional<ProductImageResult> firstImageResult() {
+        if (images == null || images.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        return images.stream()
+                .filter(image -> hasImageData(image.imageData()))
+                .findFirst();
+    }
+
+    private static boolean hasImageData(byte[] imageData) {
+        return imageData != null && imageData.length > 0;
+    }
+
+    private static Image toThumbnailImage(ProductImageResult image) {
+        return toImage(image.imageData(), THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
+    }
+
+    private static Image toDetailImage(byte[] imageData) {
+        return toImage(imageData, DETAIL_IMAGE_WIDTH, DETAIL_IMAGE_HEIGHT);
+    }
+
+    private static Image toImage(byte[] imageData, double width, double height) {
+        return new Image(new ByteArrayInputStream(imageData), width, height, true, true);
     }
 
     @Override

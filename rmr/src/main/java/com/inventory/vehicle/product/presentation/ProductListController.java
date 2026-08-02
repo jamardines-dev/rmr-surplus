@@ -85,6 +85,9 @@ public class ProductListController extends SidebarController {
     private TableColumn<ProductTableRow, String> modelCodeColumn;
 
     @FXML
+    private TableColumn<ProductTableRow, String> productLocationColumn;
+
+    @FXML
     private TableColumn<ProductTableRow, Integer> stockColumn;
 
     @FXML
@@ -110,6 +113,9 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private TextField modelCodeField;
+
+    @FXML
+    private TextField productLocationField;
 
     @FXML
     private TextField stockQuantityField;
@@ -150,6 +156,7 @@ public class ProductListController extends SidebarController {
         brandColumn.setCellValueFactory(new PropertyValueFactory<>("brandName"));
         vehicleTypeColumn.setCellValueFactory(new PropertyValueFactory<>("vehicleTypeName"));
         modelCodeColumn.setCellValueFactory(new PropertyValueFactory<>("modelCode"));
+        productLocationColumn.setCellValueFactory(new PropertyValueFactory<>("productLocation"));
         stockColumn.setCellValueFactory(new PropertyValueFactory<>("currentStock"));
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
         priceColumn.setCellFactory(column -> moneyCell());
@@ -244,6 +251,7 @@ public class ProductListController extends SidebarController {
             brandField.clear();
             vehicleTypeField.clear();
             modelCodeField.clear();
+            productLocationField.clear();
             stockQuantityField.clear();
             priceField.clear();
             lastRestockedDatePicker.setValue(null);
@@ -365,6 +373,8 @@ public class ProductListController extends SidebarController {
         vehicleTypeField.setPromptText("10 Wheeler");
         modelCodeField = new TextField();
         modelCodeField.setPromptText("8M20");
+        productLocationField = new TextField();
+        productLocationField.setPromptText("Rack A1");
         stockQuantityField = new TextField();
         stockQuantityField.setPromptText("10");
         priceField = new TextField();
@@ -404,6 +414,7 @@ public class ProductListController extends SidebarController {
                 labeledField("Brand", brandField),
                 labeledField("Vehicle", vehicleTypeField),
                 labeledField("Model", modelCodeField),
+                labeledField("Location", productLocationField),
                 stockPriceRow,
                 labeledField("Last Restocked Date", lastRestockedDatePicker),
                 productErrorLabel);
@@ -502,6 +513,8 @@ public class ProductListController extends SidebarController {
         vehicleTypeField.setPromptText("Vehicle");
         TextField modelCodeField = new TextField();
         modelCodeField.setPromptText("Model");
+        TextField productLocationField = new TextField();
+        productLocationField.setPromptText("Rack A1");
         TextField drNumberField = new TextField();
         drNumberField.setPromptText("Stock Number");
         TextField quantityField = new TextField();
@@ -557,6 +570,7 @@ public class ProductListController extends SidebarController {
                 labeledField("Brand", brandField),
                 labeledField("Vehicle", vehicleTypeField),
                 labeledField("Model", modelCodeField),
+                labeledField("Location", productLocationField),
                 labeledField("Stock Number", drNumberField),
                 quantityPriceRow,
                 productErrorLabel);
@@ -576,6 +590,7 @@ public class ProductListController extends SidebarController {
                         brandField.getText(),
                         vehicleTypeField.getText(),
                         modelCodeField.getText(),
+                        productLocationField.getText(),
                         drNumberField.getText(),
                         quantityField.getText(),
                         priceField.getText(),
@@ -694,6 +709,10 @@ public class ProductListController extends SidebarController {
         modelColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getModelCode()));
         modelColumn.setPrefWidth(130);
 
+        TableColumn<RestockProductRow, String> locationColumn = new TableColumn<>("Location");
+        locationColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getProductLocation()));
+        locationColumn.setPrefWidth(120);
+
         TableColumn<RestockProductRow, String> drColumn = new TableColumn<>("Stock Number");
         drColumn.setCellValueFactory(data -> new ReadOnlyStringWrapper(data.getValue().getDrNumber()));
         drColumn.setPrefWidth(100);
@@ -711,6 +730,7 @@ public class ProductListController extends SidebarController {
         restockTable.getColumns().add(productColumn);
         restockTable.getColumns().add(brandColumn);
         restockTable.getColumns().add(modelColumn);
+        restockTable.getColumns().add(locationColumn);
         restockTable.getColumns().add(drColumn);
         restockTable.getColumns().add(quantityColumn);
         restockTable.getColumns().add(priceColumn);
@@ -777,7 +797,8 @@ public class ProductListController extends SidebarController {
                 .filter(product -> contains(product.getProductName(), normalizedSearch)
                         || contains(product.getBrandName(), normalizedSearch)
                         || contains(product.getVehicleTypeName(), normalizedSearch)
-                        || contains(product.getModelCode(), normalizedSearch))
+                        || contains(product.getModelCode(), normalizedSearch)
+                        || contains(product.getProductLocation(), normalizedSearch))
                 .toList());
     }
 
@@ -840,10 +861,12 @@ public class ProductListController extends SidebarController {
     }
 
     private void fillForm(ProductTableRow product) {
+        product = loadFullProduct(product);
         productNameField.setText(product.getProductName());
         brandField.setText(product.getBrandName());
         vehicleTypeField.setText(product.getVehicleTypeName());
         modelCodeField.setText(product.getModelCode());
+        productLocationField.setText(product.getProductLocation());
         stockQuantityField.setText(String.valueOf(product.getCurrentStock()));
         priceField.setText(product.getUnitPrice().toPlainString());
         lastRestockedDatePicker.setValue(product.getLastRestockedDate());
@@ -861,12 +884,17 @@ public class ProductListController extends SidebarController {
         drNumberDisplayLabel.setText("Stock Number: " + product.getLastDrNumber());
     }
 
+    private ProductTableRow loadFullProduct(ProductTableRow product) {
+        return new ProductTableRow(productQueryService.findProduct(product.getId()));
+    }
+
     private CreateProductCommand toCreateCommand() {
         return new CreateProductCommand(
                 productNameField.getText(),
                 brandField.getText(),
                 vehicleTypeField.getText(),
                 modelCodeField.getText(),
+                productLocationField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
                 parsePrice(),
                 addedImages(),
@@ -881,6 +909,7 @@ public class ProductListController extends SidebarController {
                 brandField.getText(),
                 vehicleTypeField.getText(),
                 modelCodeField.getText(),
+                productLocationField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
                 parsePrice(),
                 new java.util.ArrayList<>(removedImageIds),
@@ -988,13 +1017,14 @@ public class ProductListController extends SidebarController {
     }
 
     private void openProductImages(ProductTableRow product) {
-        List<Image> images = product.getImages();
+        ProductTableRow fullProduct = loadFullProduct(product);
+        List<Image> images = fullProduct.getImages();
         if (images.isEmpty()) {
             messageLabel.setText("No product photo available.");
             return;
         }
         if (images.size() == 1) {
-            openProductImage(product.getProductName(), images.get(0));
+            openProductImage(fullProduct.getProductName(), images.get(0));
             return;
         }
 
@@ -1011,7 +1041,7 @@ public class ProductListController extends SidebarController {
             imageView.setPickOnBounds(true);
             imageView.getStyleClass().add("product-image-preview");
             imageView.setOnMouseClicked(event -> {
-                openProductImage(product.getProductName(), image);
+                openProductImage(fullProduct.getProductName(), image);
                 event.consume();
             });
             imagePane.getChildren().add(imageView);
@@ -1024,7 +1054,7 @@ public class ProductListController extends SidebarController {
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Product Photos");
-        dialog.setHeaderText(product.getProductName());
+        dialog.setHeaderText(fullProduct.getProductName());
         dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
         dialog.getDialogPane().setContent(imageScroll);
         sizeDialogToScreen(dialog, 720, 560);
@@ -1084,16 +1114,20 @@ public class ProductListController extends SidebarController {
         private final String brandName;
         private final String vehicleTypeName;
         private final String modelCode;
+        private final String productLocation;
         private final String drNumber;
         private final int quantity;
         private final BigDecimal unitPrice;
         private final java.util.List<NewProductImage> productImages;
+        private Image thumbnailImage;
+        private boolean thumbnailLoaded;
 
         private RestockProductRow(
                 String productName,
                 String brandName,
                 String vehicleTypeName,
                 String modelCode,
+                String productLocation,
                 String drNumber,
                 int quantity,
                 BigDecimal unitPrice,
@@ -1102,6 +1136,7 @@ public class ProductListController extends SidebarController {
             this.brandName = brandName;
             this.vehicleTypeName = vehicleTypeName;
             this.modelCode = modelCode;
+            this.productLocation = productLocation;
             this.drNumber = drNumber;
             this.quantity = quantity;
             this.unitPrice = unitPrice;
@@ -1113,6 +1148,7 @@ public class ProductListController extends SidebarController {
                 String brandName,
                 String vehicleTypeName,
                 String modelCode,
+                String productLocation,
                 String drNumber,
                 String quantityText,
                 String priceText,
@@ -1121,6 +1157,7 @@ public class ProductListController extends SidebarController {
             String cleanBrandName = requireText(brandName, "Brand");
             String cleanVehicleTypeName = requireText(vehicleTypeName, "Vehicle");
             String cleanModelCode = requireText(modelCode, "Model");
+            String cleanProductLocation = trimToNullText(productLocation);
             String cleanDrNumber = requireText(drNumber, "Stock Number");
             int quantity = parseQuantityText(quantityText);
             if (quantity <= 0) {
@@ -1132,6 +1169,7 @@ public class ProductListController extends SidebarController {
                     cleanBrandName,
                     cleanVehicleTypeName,
                     cleanModelCode,
+                    cleanProductLocation,
                     cleanDrNumber,
                     quantity,
                     unitPrice,
@@ -1143,6 +1181,10 @@ public class ProductListController extends SidebarController {
                 throw new BusinessException(fieldName + " is required.");
             }
             return value.trim();
+        }
+
+        private static String trimToNullText(String value) {
+            return value == null || value.isBlank() ? null : value.trim();
         }
 
         private static int parseQuantityText(String value) {
@@ -1191,6 +1233,10 @@ public class ProductListController extends SidebarController {
             return modelCode;
         }
 
+        private String getProductLocation() {
+            return productLocation == null ? "" : productLocation;
+        }
+
         private String getDrNumber() {
             return drNumber;
         }
@@ -1204,10 +1250,20 @@ public class ProductListController extends SidebarController {
         }
 
         private Image getImage() {
-            if (productImages.isEmpty() || productImages.get(0).data() == null || productImages.get(0).data().length == 0) {
+            if (!thumbnailLoaded) {
+                thumbnailImage = createThumbnailImage();
+                thumbnailLoaded = true;
+            }
+            return thumbnailImage;
+        }
+
+        private Image createThumbnailImage() {
+            if (productImages.isEmpty()
+                    || productImages.get(0).data() == null
+                    || productImages.get(0).data().length == 0) {
                 return null;
             }
-            return new Image(new ByteArrayInputStream(productImages.get(0).data()));
+            return new Image(new ByteArrayInputStream(productImages.get(0).data()), 120, 90, true, true);
         }
 
         private CreateProductCommand toCreateCommand() {
@@ -1216,6 +1272,7 @@ public class ProductListController extends SidebarController {
                     brandName,
                     vehicleTypeName,
                     modelCode,
+                    productLocation,
                     quantity,
                     unitPrice,
                     productImages,

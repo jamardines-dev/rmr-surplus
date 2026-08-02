@@ -8,6 +8,7 @@ public record ProductDto(
         String brand,
         String vehicleType,
         String modelCode,
+        String productLocation,
         int currentStock,
         BigDecimal unitPrice,
         boolean active
@@ -19,6 +20,7 @@ public record ProductDto(
                 product.getBrand().getName(),
                 product.getVehicleType().getName(),
                 product.getModelCode(),
+                product.getProductLocation(),
                 product.getCurrentStock(),
                 product.getUnitPrice(),
                 product.isActive()
