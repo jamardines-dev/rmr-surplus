@@ -319,9 +319,13 @@ public class ProductListController extends SidebarController {
         productErrorLabel.getStyleClass().add("message");
 
         VBox content = createProductDetailsContent(productErrorLabel);
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().setPrefWidth(520);
-        dialog.getDialogPane().setPrefHeight(700);
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.getStyleClass().add("content-scroll");
+        dialog.getDialogPane().setContent(scrollPane);
+        sizeDialogToScreen(dialog, 560, 700);
+        dialog.setResizable(true);
 
         Button saveButton = (Button) dialog.getDialogPane().lookupButton(saveButtonType);
         saveButton.addEventFilter(ActionEvent.ACTION, event -> {
@@ -392,8 +396,8 @@ public class ProductListController extends SidebarController {
                 labeledField("Default Price", priceField));
 
         content.getChildren().addAll(
-                productImagePane,
                 imageActions,
+                productImagePreviewScroll(),
                 imageNameLabel,
                 drNumberDisplayLabel,
                 labeledField("Product", productNameField),
@@ -404,6 +408,17 @@ public class ProductListController extends SidebarController {
                 labeledField("Last Restocked Date", lastRestockedDatePicker),
                 productErrorLabel);
         return content;
+    }
+
+    private ScrollPane productImagePreviewScroll() {
+        ScrollPane scrollPane = new ScrollPane(productImagePane);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setMinHeight(120);
+        scrollPane.setPrefHeight(210);
+        scrollPane.setMaxHeight(230);
+        scrollPane.getStyleClass().add("content-scroll");
+        return scrollPane;
     }
 
     @FXML
@@ -493,20 +508,27 @@ public class ProductListController extends SidebarController {
         quantityField.setPromptText("Restock quantity");
         TextField priceField = new TextField();
         priceField.setPromptText("Default price");
-        ImageView photoPreview = new ImageView();
-        photoPreview.setFitWidth(150);
-        photoPreview.setFitHeight(96);
-        photoPreview.setPreserveRatio(true);
-        photoPreview.getStyleClass().add("product-image-preview");
+        java.util.List<EditableProductImage> restockImages = new java.util.ArrayList<>();
+        TilePane photoPreviewPane = new TilePane();
+        photoPreviewPane.setHgap(10);
+        photoPreviewPane.setVgap(10);
+        photoPreviewPane.setPrefColumns(3);
+        photoPreviewPane.setAlignment(Pos.CENTER_LEFT);
+        ScrollPane photoPreviewScroll = new ScrollPane(photoPreviewPane);
+        photoPreviewScroll.setFitToWidth(true);
+        photoPreviewScroll.setPannable(true);
+        photoPreviewScroll.setMinHeight(120);
+        photoPreviewScroll.setPrefHeight(170);
+        photoPreviewScroll.setMaxHeight(190);
+        photoPreviewScroll.getStyleClass().add("content-scroll");
         Label photoLabel = new Label("No photo selected");
         photoLabel.getStyleClass().add("subtitle");
         photoLabel.setWrapText(true);
-        byte[][] productImage = new byte[1][];
-        String[] productImageType = new String[1];
         Button choosePhotoButton = new Button("Choose Photo");
         choosePhotoButton.getStyleClass().add("secondary");
+        choosePhotoButton.setMaxWidth(Double.MAX_VALUE);
         choosePhotoButton.setOnAction(
-                event -> chooseRestockProductImage(photoPreview, photoLabel, productImage, productImageType));
+                event -> chooseRestockProductImage(photoPreviewPane, photoLabel, restockImages));
         Label productErrorLabel = new Label();
         productErrorLabel.getStyleClass().add("message");
 
@@ -523,8 +545,7 @@ public class ProductListController extends SidebarController {
                 labeledField("Restock Quantity", quantityField),
                 labeledField("Default Price", priceField));
 
-        VBox photoText = new VBox(8, choosePhotoButton, photoLabel);
-        HBox photoRow = new HBox(12, photoPreview, photoText);
+        VBox photoRow = new VBox(8, choosePhotoButton, photoPreviewScroll, photoLabel);
         photoRow.getStyleClass().add("modal-photo-row");
 
         VBox content = new VBox(12);
@@ -558,8 +579,10 @@ public class ProductListController extends SidebarController {
                         drNumberField.getText(),
                         quantityField.getText(),
                         priceField.getText(),
-                        productImage[0],
-                        productImageType[0]);
+                        restockImages.stream()
+                                .map(EditableProductImage::newImage)
+                                .filter(image -> image != null)
+                                .toList());
                 restockRows.add(row);
                 restockErrorLabel.setText("");
             } catch (BusinessException | NumberFormatException exception) {
@@ -572,10 +595,14 @@ public class ProductListController extends SidebarController {
     }
 
     private void chooseRestockProductImage(
-            ImageView photoPreview,
+            TilePane photoPreviewPane,
             Label photoLabel,
-            byte[][] productImage,
-            String[] productImageType) {
+            java.util.List<EditableProductImage> restockImages) {
+        if (restockImages.size() >= MAX_PRODUCT_IMAGES) {
+            photoLabel.setText("Maximum " + MAX_PRODUCT_IMAGES + " images allowed.");
+            return;
+        }
+
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Choose Product Photo");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
@@ -590,13 +617,57 @@ public class ProductListController extends SidebarController {
         }
 
         try {
-            productImage[0] = Files.readAllBytes(file.toPath());
-            productImageType[0] = Files.probeContentType(file.toPath());
-            photoPreview.setImage(new Image(file.toURI().toString()));
-            photoLabel.setText(file.getName());
+            byte[] imageData = Files.readAllBytes(file.toPath());
+            String imageType = Files.probeContentType(file.toPath());
+            Image image = new Image(file.toURI().toString());
+            EditableProductImage productImage = EditableProductImage.newImage(new NewProductImage(imageData, imageType), image);
+            restockImages.add(productImage);
+            updateRestockImagePreviews(photoPreviewPane, photoLabel, restockImages);
         } catch (IOException exception) {
             photoLabel.setText("Could not load product photo.");
         }
+    }
+
+    private void updateRestockImagePreviews(
+            TilePane photoPreviewPane,
+            Label photoLabel,
+            java.util.List<EditableProductImage> restockImages) {
+        photoPreviewPane.getChildren().setAll(restockImages.stream()
+                .map(image -> createRestockImagePreview(photoPreviewPane, photoLabel, restockImages, image))
+                .toList());
+        photoLabel.setText(restockImages.isEmpty()
+                ? "No photo selected"
+                : "(" + restockImages.size() + "/" + MAX_PRODUCT_IMAGES + " images)");
+    }
+
+    private VBox createRestockImagePreview(
+            TilePane photoPreviewPane,
+            Label photoLabel,
+            java.util.List<EditableProductImage> restockImages,
+            EditableProductImage productImage) {
+        ImageView imageView = new ImageView(productImage.image());
+        imageView.setFitWidth(120);
+        imageView.setFitHeight(84);
+        imageView.setPreserveRatio(true);
+        imageView.setPickOnBounds(true);
+        imageView.getStyleClass().add("product-image-preview");
+        imageView.setOnMouseClicked(event -> {
+            openProductImage("Restock Product Photo", productImage.image());
+            event.consume();
+        });
+
+        Button removeButton = new Button("Remove");
+        removeButton.getStyleClass().add("secondary");
+        removeButton.setMaxWidth(Double.MAX_VALUE);
+        removeButton.setOnAction(event -> {
+            restockImages.remove(productImage);
+            updateRestockImagePreviews(photoPreviewPane, photoLabel, restockImages);
+        });
+
+        VBox preview = new VBox(6, imageView, removeButton);
+        preview.setAlignment(Pos.CENTER);
+        preview.setPrefWidth(132);
+        return preview;
     }
 
     private TableView<RestockProductRow> createRestockTable() {
@@ -1016,8 +1087,7 @@ public class ProductListController extends SidebarController {
         private final String drNumber;
         private final int quantity;
         private final BigDecimal unitPrice;
-        private final byte[] productImage;
-        private final String productImageType;
+        private final java.util.List<NewProductImage> productImages;
 
         private RestockProductRow(
                 String productName,
@@ -1027,8 +1097,7 @@ public class ProductListController extends SidebarController {
                 String drNumber,
                 int quantity,
                 BigDecimal unitPrice,
-                byte[] productImage,
-                String productImageType) {
+                java.util.List<NewProductImage> productImages) {
             this.productName = productName;
             this.brandName = brandName;
             this.vehicleTypeName = vehicleTypeName;
@@ -1036,8 +1105,7 @@ public class ProductListController extends SidebarController {
             this.drNumber = drNumber;
             this.quantity = quantity;
             this.unitPrice = unitPrice;
-            this.productImage = productImage;
-            this.productImageType = productImageType;
+            this.productImages = productImages == null ? List.of() : productImages;
         }
 
         private static RestockProductRow fromFields(
@@ -1048,8 +1116,7 @@ public class ProductListController extends SidebarController {
                 String drNumber,
                 String quantityText,
                 String priceText,
-                byte[] productImage,
-                String productImageType) {
+                java.util.List<NewProductImage> productImages) {
             String cleanProductName = requireText(productName, "Product");
             String cleanBrandName = requireText(brandName, "Brand");
             String cleanVehicleTypeName = requireText(vehicleTypeName, "Vehicle");
@@ -1068,8 +1135,7 @@ public class ProductListController extends SidebarController {
                     cleanDrNumber,
                     quantity,
                     unitPrice,
-                    productImage,
-                    productImageType);
+                    productImages);
         }
 
         private static String requireText(String value, String fieldName) {
@@ -1138,17 +1204,13 @@ public class ProductListController extends SidebarController {
         }
 
         private Image getImage() {
-            if (productImage == null || productImage.length == 0) {
+            if (productImages.isEmpty() || productImages.get(0).data() == null || productImages.get(0).data().length == 0) {
                 return null;
             }
-            return new Image(new ByteArrayInputStream(productImage));
+            return new Image(new ByteArrayInputStream(productImages.get(0).data()));
         }
 
         private CreateProductCommand toCreateCommand() {
-            java.util.List<NewProductImage> images = new java.util.ArrayList<>();
-            if (productImage != null && productImage.length > 0) {
-                images.add(new NewProductImage(productImage, productImageType));
-            }
             return new CreateProductCommand(
                     productName,
                     brandName,
@@ -1156,7 +1218,7 @@ public class ProductListController extends SidebarController {
                     modelCode,
                     quantity,
                     unitPrice,
-                    images,
+                    productImages,
                     null,
                     drNumber);
         }
