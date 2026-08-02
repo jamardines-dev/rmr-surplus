@@ -7,6 +7,7 @@ import com.inventory.vehicle.navigation.SceneManager;
 import com.inventory.vehicle.navigation.SidebarController;
 import com.inventory.vehicle.product.application.CreateProductCommand;
 import com.inventory.vehicle.product.application.NewProductImage;
+import com.inventory.vehicle.product.application.ProductImageResult;
 import com.inventory.vehicle.product.application.ProductQueryService;
 import com.inventory.vehicle.product.application.ProductResult;
 import com.inventory.vehicle.product.application.ProductService;
@@ -26,6 +27,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -43,6 +45,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
@@ -57,7 +60,8 @@ public class ProductListController extends SidebarController {
     private final ProductQueryService productQueryService;
     private final ProductService productService;
     private List<ProductTableRow> allProducts = List.of();
-    private java.util.List<NewProductImage> selectedImages = new java.util.ArrayList<>();
+    private final java.util.List<EditableProductImage> editableImages = new java.util.ArrayList<>();
+    private final java.util.List<Long> removedImageIds = new java.util.ArrayList<>();
 
     @FXML
     private TableView<ProductTableRow> productTable;
@@ -117,7 +121,7 @@ public class ProductListController extends SidebarController {
     private DatePicker lastRestockedDatePicker;
 
     @FXML
-    private ImageView productImageView;
+    private TilePane productImagePane;
 
     @FXML
     private Label imageNameLabel;
@@ -244,9 +248,10 @@ public class ProductListController extends SidebarController {
             priceField.clear();
             lastRestockedDatePicker.setValue(null);
         }
-        selectedImages.clear();
-        if (productImageView != null) {
-            productImageView.setImage(null);
+        editableImages.clear();
+        removedImageIds.clear();
+        if (productImagePane != null) {
+            productImagePane.getChildren().clear();
         }
         if (imageNameLabel != null) {
             imageNameLabel.setText("No photo selected");
@@ -255,7 +260,7 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private void chooseProductImage() {
-        if (selectedImages.size() >= MAX_PRODUCT_IMAGES) {
+        if (editableImages.size() >= MAX_PRODUCT_IMAGES) {
             messageLabel.setText("Maximum " + MAX_PRODUCT_IMAGES + " images allowed. Remove an image to add another.");
             return;
         }
@@ -276,12 +281,12 @@ public class ProductListController extends SidebarController {
         try {
             byte[] imageData = Files.readAllBytes(file.toPath());
             String imageType = Files.probeContentType(file.toPath());
-            selectedImages.add(new NewProductImage(imageData, imageType));
-            productImageView.setImage(new Image(file.toURI().toString()));
-            imageNameLabel.setText("(" + selectedImages.size() + "/" + MAX_PRODUCT_IMAGES + " images) " + file.getName());
+            editableImages.add(EditableProductImage.newImage(new NewProductImage(imageData, imageType),
+                    new Image(file.toURI().toString())));
+            updateProductImagePreviews();
             messageLabel.setText(
-                    "Photo " + selectedImages.size() + " added. "
-                            + (MAX_PRODUCT_IMAGES - selectedImages.size()) + " more allowed.");
+                    "Photo " + editableImages.size() + " added. "
+                            + (MAX_PRODUCT_IMAGES - editableImages.size()) + " more allowed.");
         } catch (IOException exception) {
             messageLabel.setText("Could not load product photo.");
         }
@@ -289,20 +294,15 @@ public class ProductListController extends SidebarController {
 
     @FXML
     private void removeProductImage() {
-        if (!selectedImages.isEmpty()) {
-            selectedImages.remove(selectedImages.size() - 1);
-            productImageView.setImage(null);
-            imageNameLabel.setText(
-                    selectedImages.isEmpty() ? "No photo selected"
-                            : "(" + selectedImages.size() + "/" + MAX_PRODUCT_IMAGES + " images)");
-            messageLabel.setText(selectedImages.isEmpty() ? "Photo removed."
-                    : "Photo removed. " + (MAX_PRODUCT_IMAGES - selectedImages.size()) + " more allowed.");
+        if (!editableImages.isEmpty()) {
+            removeProductImage(editableImages.get(editableImages.size() - 1));
         }
     }
 
     private void openProductDetailsModal(ProductTableRow product) {
         initializeProductFormFields();
-        selectedImages.clear();
+        editableImages.clear();
+        removedImageIds.clear();
         if (product != null) {
             fillForm(product);
         }
@@ -343,11 +343,11 @@ public class ProductListController extends SidebarController {
     }
 
     private void initializeProductFormFields() {
-        productImageView = new ImageView();
-        productImageView.setFitHeight(120);
-        productImageView.setFitWidth(190);
-        productImageView.setPreserveRatio(true);
-        productImageView.getStyleClass().add("product-image-preview");
+        productImagePane = new TilePane();
+        productImagePane.setHgap(10);
+        productImagePane.setVgap(10);
+        productImagePane.setPrefColumns(3);
+        productImagePane.setAlignment(Pos.CENTER_LEFT);
         imageNameLabel = new Label("No photo selected");
         imageNameLabel.setWrapText(true);
         imageNameLabel.getStyleClass().add("subtitle");
@@ -392,7 +392,7 @@ public class ProductListController extends SidebarController {
                 labeledField("Default Price", priceField));
 
         content.getChildren().addAll(
-                productImageView,
+                productImagePane,
                 imageActions,
                 imageNameLabel,
                 drNumberDisplayLabel,
@@ -714,6 +714,60 @@ public class ProductListController extends SidebarController {
         return value != null && value.toLowerCase().contains(searchText);
     }
 
+    private void updateProductImagePreviews() {
+        if (productImagePane == null) {
+            return;
+        }
+
+        productImagePane.getChildren().setAll(editableImages.stream()
+                .map(this::createProductImagePreview)
+                .toList());
+        imageNameLabel.setText(editableImages.isEmpty()
+                ? "No photo selected"
+                : "(" + editableImages.size() + "/" + MAX_PRODUCT_IMAGES + " images)");
+    }
+
+    private VBox createProductImagePreview(EditableProductImage productImage) {
+        ImageView imageView = new ImageView(productImage.image());
+        imageView.setFitWidth(130);
+        imageView.setFitHeight(92);
+        imageView.setPreserveRatio(true);
+        imageView.setPickOnBounds(true);
+        imageView.getStyleClass().add("product-image-preview");
+        imageView.setOnMouseClicked(event -> {
+            openProductImage("Product Photo", productImage.image());
+            event.consume();
+        });
+
+        Button removeButton = new Button("Remove");
+        removeButton.getStyleClass().add("secondary");
+        removeButton.setMaxWidth(Double.MAX_VALUE);
+        removeButton.setOnAction(event -> removeProductImage(productImage));
+
+        VBox preview = new VBox(6, imageView, removeButton);
+        preview.setAlignment(Pos.CENTER);
+        preview.setPrefWidth(142);
+        return preview;
+    }
+
+    private void removeProductImage(EditableProductImage productImage) {
+        if (productImage.savedImageId() != null) {
+            removedImageIds.add(productImage.savedImageId());
+        }
+        editableImages.remove(productImage);
+        updateProductImagePreviews();
+        messageLabel.setText(editableImages.isEmpty()
+                ? "Photo removed."
+                : "Photo removed. " + (MAX_PRODUCT_IMAGES - editableImages.size()) + " more allowed.");
+    }
+
+    private java.util.List<NewProductImage> addedImages() {
+        return editableImages.stream()
+                .map(EditableProductImage::newImage)
+                .filter(image -> image != null)
+                .toList();
+    }
+
     private void fillForm(ProductTableRow product) {
         productNameField.setText(product.getProductName());
         brandField.setText(product.getBrandName());
@@ -722,9 +776,17 @@ public class ProductListController extends SidebarController {
         stockQuantityField.setText(String.valueOf(product.getCurrentStock()));
         priceField.setText(product.getUnitPrice().toPlainString());
         lastRestockedDatePicker.setValue(product.getLastRestockedDate());
-        selectedImages.clear();
-        productImageView.setImage(product.getImage());
-        imageNameLabel.setText(product.getImage() == null ? "No photo selected" : "Saved product photo");
+        editableImages.clear();
+        removedImageIds.clear();
+        for (ProductImageResult imageResult : product.getImageResults()) {
+            byte[] imageData = imageResult.imageData();
+            if (imageData != null && imageData.length > 0) {
+                editableImages.add(EditableProductImage.savedImage(
+                        imageResult.id(),
+                        new Image(new ByteArrayInputStream(imageData))));
+            }
+        }
+        updateProductImagePreviews();
         drNumberDisplayLabel.setText("Stock Number: " + product.getLastDrNumber());
     }
 
@@ -736,7 +798,7 @@ public class ProductListController extends SidebarController {
                 modelCodeField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
                 parsePrice(),
-                new java.util.ArrayList<>(selectedImages),
+                addedImages(),
                 lastRestockedDatePicker.getValue(),
                 null);
     }
@@ -750,8 +812,8 @@ public class ProductListController extends SidebarController {
                 modelCodeField.getText(),
                 parseInteger(stockQuantityField.getText(), "Stock quantity"),
                 parsePrice(),
-                new java.util.ArrayList<>(),
-                new java.util.ArrayList<>(selectedImages),
+                new java.util.ArrayList<>(removedImageIds),
+                addedImages(),
                 lastRestockedDatePicker.getValue());
     }
 
@@ -798,10 +860,15 @@ public class ProductListController extends SidebarController {
             private final ImageView imageView = new ImageView();
 
             {
-                imageView.setFitWidth(52);
-                imageView.setFitHeight(42);
-                imageView.setPreserveRatio(true);
-            }
+            imageView.setFitWidth(52);
+            imageView.setFitHeight(42);
+            imageView.setPreserveRatio(true);
+            imageView.setPickOnBounds(true);
+            imageView.setOnMouseClicked(event -> {
+                openProductImage("Restock Product Photo", imageView.getImage());
+                event.consume();
+            });
+        }
 
             @Override
             protected void updateItem(Image image, boolean empty) {
@@ -821,10 +888,20 @@ public class ProductListController extends SidebarController {
             private final ImageView imageView = new ImageView();
 
             {
-                imageView.setFitWidth(52);
-                imageView.setFitHeight(42);
-                imageView.setPreserveRatio(true);
-            }
+            imageView.setFitWidth(52);
+            imageView.setFitHeight(42);
+            imageView.setPreserveRatio(true);
+            imageView.setPickOnBounds(true);
+            imageView.setOnMouseClicked(event -> {
+                ProductTableRow product = getTableRow() == null ? null : getTableRow().getItem();
+                if (product == null) {
+                    openProductImage("Product Photo", imageView.getImage());
+                } else {
+                    openProductImages(product);
+                }
+                event.consume();
+            });
+        }
 
             @Override
             protected void updateItem(Image image, boolean empty) {
@@ -839,9 +916,95 @@ public class ProductListController extends SidebarController {
         };
     }
 
+    private void openProductImages(ProductTableRow product) {
+        List<Image> images = product.getImages();
+        if (images.isEmpty()) {
+            messageLabel.setText("No product photo available.");
+            return;
+        }
+        if (images.size() == 1) {
+            openProductImage(product.getProductName(), images.get(0));
+            return;
+        }
+
+        TilePane imagePane = new TilePane();
+        imagePane.setHgap(12);
+        imagePane.setVgap(12);
+        imagePane.setPrefColumns(3);
+        imagePane.setAlignment(Pos.CENTER_LEFT);
+        for (Image image : images) {
+            ImageView imageView = new ImageView(image);
+            imageView.setFitWidth(180);
+            imageView.setFitHeight(130);
+            imageView.setPreserveRatio(true);
+            imageView.setPickOnBounds(true);
+            imageView.getStyleClass().add("product-image-preview");
+            imageView.setOnMouseClicked(event -> {
+                openProductImage(product.getProductName(), image);
+                event.consume();
+            });
+            imagePane.getChildren().add(imageView);
+        }
+
+        ScrollPane imageScroll = new ScrollPane(imagePane);
+        imageScroll.setFitToWidth(true);
+        imageScroll.setPannable(true);
+        imageScroll.getStyleClass().add("content-scroll");
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Product Photos");
+        dialog.setHeaderText(product.getProductName());
+        dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.getDialogPane().setContent(imageScroll);
+        sizeDialogToScreen(dialog, 720, 560);
+        dialog.setResizable(true);
+        dialog.showAndWait();
+    }
+
+    private void openProductImage(String title, Image image) {
+        if (image == null) {
+            messageLabel.setText("No product photo available.");
+            return;
+        }
+
+        ImageView imageView = new ImageView(image);
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(760);
+        imageView.setFitHeight(520);
+
+        ScrollPane imageScroll = new ScrollPane(imageView);
+        imageScroll.setFitToWidth(true);
+        imageScroll.setFitToHeight(true);
+        imageScroll.setPannable(true);
+        imageScroll.getStyleClass().add("content-scroll");
+
+        VBox content = new VBox(12, imageScroll);
+        content.setPrefSize(820, 600);
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Product Photo");
+        dialog.setHeaderText(title);
+        dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.getDialogPane().setContent(content);
+        sizeDialogToScreen(dialog, 860, 680);
+        dialog.setResizable(true);
+        dialog.showAndWait();
+    }
+
     @FXML
     private void backToDashboard() {
         showDashboard();
+    }
+
+    private record EditableProductImage(Long savedImageId, NewProductImage newImage, Image image) {
+
+        private static EditableProductImage savedImage(Long savedImageId, Image image) {
+            return new EditableProductImage(savedImageId, null, image);
+        }
+
+        private static EditableProductImage newImage(NewProductImage newImage, Image image) {
+            return new EditableProductImage(null, newImage, image);
+        }
     }
 
     private static class RestockProductRow {

@@ -420,21 +420,29 @@ public class EmployeeDashboardController extends SidebarController {
 
     private void openProductDetails(ProductTableRow product) {
         Image image = product.getImage();
-        ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(240);
-        imageView.setFitHeight(180);
-        imageView.setPreserveRatio(true);
-        imageView.setPickOnBounds(true);
-        imageView.getStyleClass().add("product-image-preview");
-        imageView.setOnMouseClicked(event -> {
-            openProductImage(product);
-            event.consume();
+        TilePane imagePane = new TilePane();
+        imagePane.setHgap(10);
+        imagePane.setVgap(10);
+        imagePane.setPrefColumns(3);
+        imagePane.setAlignment(Pos.CENTER);
+        product.getImages().forEach(productImage -> {
+            ImageView imageView = new ImageView(productImage);
+            imageView.setFitWidth(150);
+            imageView.setFitHeight(112);
+            imageView.setPreserveRatio(true);
+            imageView.setPickOnBounds(true);
+            imageView.getStyleClass().add("product-image-preview");
+            imageView.setOnMouseClicked(event -> {
+                openProductImage(product.getProductName(), productImage);
+                event.consume();
+            });
+            imagePane.getChildren().add(imageView);
         });
 
-        Label noPhotoLabel = new Label(image == null ? "No Photo" : "Click photo to enlarge");
+        Label noPhotoLabel = new Label(image == null ? "No Photo" : "Click a photo to enlarge");
         noPhotoLabel.getStyleClass().add("subtitle");
 
-        VBox photoBox = new VBox(8, imageView, noPhotoLabel);
+        VBox photoBox = new VBox(8, imagePane, noPhotoLabel);
         photoBox.setAlignment(Pos.CENTER);
         photoBox.getStyleClass().add("product-card-image-box");
 
@@ -449,14 +457,19 @@ public class EmployeeDashboardController extends SidebarController {
         addDetail(details, 1, 2, "DR Number", product.getLastDrNumber().isEmpty() ? "-" : product.getLastDrNumber());
         addDetail(details, 0, 3, "Default Price", MoneyFormat.peso(product.getUnitPrice()));
 
-        VBox content = new VBox(14, photoBox, details);
-        content.setPrefWidth(560);
+        ScrollPane contentScroll = new ScrollPane(new VBox(14, photoBox, details));
+        contentScroll.setFitToWidth(true);
+        contentScroll.setPannable(true);
+        contentScroll.getStyleClass().add("content-scroll");
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Product Details");
         dialog.setHeaderText(product.getProductName());
         dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE));
-        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setContent(contentScroll);
+        dialog.getDialogPane().setPrefWidth(620);
+        dialog.getDialogPane().setPrefHeight(560);
+        dialog.setResizable(true);
         dialog.showAndWait();
     }
 

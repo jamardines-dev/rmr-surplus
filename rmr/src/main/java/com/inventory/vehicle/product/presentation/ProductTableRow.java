@@ -77,14 +77,23 @@ public class ProductTableRow {
     }
 
     public Image getImage() {
+        List<Image> productImages = getImages();
+        return productImages.isEmpty() ? null : productImages.get(0);
+    }
+
+    public List<Image> getImages() {
         if (images == null || images.isEmpty()) {
-            return null;
+            return List.of();
         }
-        byte[] imageData = images.get(0).imageData();
-        if (imageData == null || imageData.length == 0) {
-            return null;
-        }
-        return new Image(new ByteArrayInputStream(imageData));
+        return images.stream()
+                .map(ProductImageResult::imageData)
+                .filter(imageData -> imageData != null && imageData.length > 0)
+                .map(imageData -> new Image(new ByteArrayInputStream(imageData)))
+                .toList();
+    }
+
+    public List<ProductImageResult> getImageResults() {
+        return images == null ? List.of() : images;
     }
 
     public boolean isActive() {

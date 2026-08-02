@@ -20,7 +20,7 @@ import javax.print.attribute.PrintRequestAttributeSet;
 public class ReceiptPrinter {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final int RECEIPT_WIDTH = 32;
+    private static final int RECEIPT_WIDTH = 42;
     private static final String DEFAULT_PRINTER_NAME = "Generic / Text Only";
 
     public static PrintResult printReceipt(String employeeName, LocalDate saleDate, List<EmployeeCartItemRow> cartItems,
@@ -79,6 +79,7 @@ public class ReceiptPrinter {
         StringBuilder sb = new StringBuilder();
 
         sb.append(center("R.M.R AUTO PARTS AND ACCESSORIES SHOP")).append("\n");
+        sb.append(center("Guituan, Ipil, Zamboanga Sibugay")).append("\n");
         sb.append(center("SALES RECEIPT")).append("\n\n");
 
         sb.append("Transaction: ").append(saleId).append("\n");
