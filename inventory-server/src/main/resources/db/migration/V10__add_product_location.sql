@@ -1,2 +1,2 @@
 ALTER TABLE products
-    ADD COLUMN product_location VARCHAR(120);
+    ADD COLUMN IF NOT EXISTS product_location VARCHAR(120);
